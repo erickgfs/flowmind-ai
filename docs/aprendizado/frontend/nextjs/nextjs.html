@@ -352,4 +352,68 @@ export default function SobrePage() {
       <details><summary>5. Por que nada de segredo em NEXT_PUBLIC_?</summary><p>Vai parar no JavaScript que qualquer visitante baixa.</p></details>
     </div>
   </section>
+
+  <section id="instant">
+    <p class="eyebrow"><b>evolução prática</b> · bug real no npm run dev</p>
+    <h2>Validação de navegação instantânea (instant)</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>Três linhas vermelhas, um só erro</h3>
+        <ul>
+          <li><code>Could not validate `instant`…</code>: o sintoma</li>
+          <li><code>…while attempting to validate instant UI</code>: onde (AuthGate, no layout)</li>
+          <li><code>[cause] Browser-only rendering was requested by `browser()`</code>: a causa</li>
+        </ul>
+        <p>No <code>dev</code>, o Next 16 testa cada página: "um clique até aqui mostra tela na hora?". Para isso, <strong>simula a navegação no servidor</strong>. Os testes anteriores usavam o build de produção, onde essa checagem não existe.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>A vistoria dos bombeiros</h3>
+        <p>O vistoriador percorre o prédio. Uma <strong>ala que só abre com o crachá do morador</strong> (o <code>use(browser())</code>) impede o laudo: "não foi possível vistoriar".</p>
+        <p class="limit">Onde falha: a ala trancada não é defeito, foi feita assim de propósito. A solução é dizer ao vistoriador para pular a ala, não arrombar a porta.</p>
+      </div>
+    </div>
+
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 230" role="img" aria-label="No /login o browser() fica dentro da página e a validação passa. No /dashboard o browser() fica no layout (app), que a validação precisa renderizar no servidor para simular a navegação, e ela falha. Com instant = false na página, a validação é pulada.">
+          <defs><marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+          <text x="20" y="24" class="title">/login</text>
+          <rect x="20" y="36" width="380" height="44" rx="8" class="box"/><text x="36" y="63" class="mono">app/layout.tsx  (servidor ✓)</text>
+          <rect x="40" y="92" width="360" height="44" rx="8" class="state ok"/><text x="56" y="119" class="mono ok-text">login/page.tsx → browser() na PÁGINA</text>
+          <text x="40" y="166" class="ok-text">validação passa</text>
+
+          <text x="480" y="24" class="title">/dashboard</text>
+          <rect x="480" y="36" width="400" height="44" rx="8" class="box"/><text x="496" y="63" class="mono">app/layout.tsx  (servidor ✓)</text>
+          <rect x="500" y="92" width="380" height="44" rx="8" class="state bad"/><text x="516" y="119" class="mono bad-text">(app)/layout.tsx → browser() no LAYOUT ✗</text>
+          <rect x="520" y="148" width="360" height="44" rx="8" class="hl"/><text x="536" y="175" class="mono accent-text">dashboard/page.tsx: instant = false</text>
+          <line x1="700" y1="136" x2="700" y2="144" class="edge" marker-end="url(#i1)"/>
+          <text x="480" y="216" class="small">para validar a página, o Next precisa renderizar o layout compartilhado no servidor</text>
+        </svg>
+      </div>
+      <figcaption>Testado numa cópia isolada (git worktree, porta 3002): <code>false</code> só no layout não resolve; só na página resolve.</figcaption>
+    </figure>
+
+    <div class="code"><div class="file"><span>src/app/(app)/dashboard/page.tsx</span><span>TSX</span></div>
+<pre><span class="c">// O layout (app) só renderiza no navegador (token no localStorage), então</span>
+<span class="c">// o Next não consegue simulá-lo no servidor. A navegação continua instantânea.</span>
+<span class="k">export const</span> instant = <span class="v">false</span>;</pre></div>
+    <p class="callout"><strong>Desliga só a checagem, só nesta página.</strong> Build, pré-renderização e navegação continuam iguais. Toda página nova dentro de <code>(app)</code> precisa da mesma linha.</p>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Armadilha</th><th>Correção</th></tr></thead>
+      <tbody>
+        <tr><td>Testar só com <code>npm run build</code></td><td>Algumas checagens só existem no <code>dev</code>: teste nos dois</td></tr>
+        <tr><td><code>instant = false</code> no layout para cobrir as páginas</td><td>Não cobre: cada página é validada por padrão</td></tr>
+        <tr class="danger"><td>Ler só a primeira linha do erro</td><td>O motivo está no <code>[cause]</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="quiz">
+      <details><summary>6. Por que aparecia no dev e não no build?</summary><p>A validação de navegação instantânea só roda em desenvolvimento.</p></details>
+      <details><summary>7. Por que o /login não dava erro?</summary><p>Lá o <code>browser()</code> está na página; no /dashboard estava no layout, que a validação precisa renderizar.</p></details>
+      <details><summary>8. instant = false deixa a navegação lenta?</summary><p>Não; só desliga a checagem. A sessão já está na memória do Zustand.</p></details>
+    </div>
+  </section>
 </main>
