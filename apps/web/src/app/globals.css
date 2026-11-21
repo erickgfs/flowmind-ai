@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens do FlowMind (direção "preciso e calmo", estilo Linear).
+ * Cada cor existe como variável CSS; o tema escuro só troca os valores.
+ * Assim os componentes usam um nome só (bg-surface, text-muted...) e
+ * funcionam nos dois temas sem nenhuma classe "dark:".
+ */
+:root {
+  --background: #fbfbfc;
+  --surface: #ffffff;
+  --subtle: #f4f5f7; /* hover, fundo das colunas */
+  --border: #e4e5e9;
+  --border-strong: #d2d4da;
+  --foreground: #1b1c21;
+  --muted: #6b6f7b;
+  --accent: #5b5bd6;
+  --accent-hover: #4c4cc4;
+  --accent-foreground: #ffffff;
+  --accent-soft: #ececfb; /* fundo de item selecionado */
+  --danger: #d93d42;
+  --danger-soft: #fdeceb;
+  --priority-high: #e5484d;
+  --priority-medium: #f5a524;
+  --priority-low: #8b8d98;
+  --success: #30a46c;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0e0f12;
+    --surface: #16171b;
+    --subtle: #1d1f24;
+    --border: #2a2c33;
+    --border-strong: #3a3d46;
+    --foreground: #ecedef;
+    --muted: #8a8f98;
+    --accent: #7c7ff2;
+    --accent-hover: #9194f5;
+    --accent-foreground: #0e0f12;
+    --accent-soft: #23243a;
+    --danger: #f2555a;
+    --danger-soft: #2c1a1c;
+    --priority-high: #f2555a;
+    --priority-medium: #f5b546;
+    --priority-low: #7c7f8a;
+    --success: #3dd68c;
+    color-scheme: dark;
+  }
+}
+
+/* Liga as variáveis às classes do Tailwind v4: --color-surface vira bg-surface, text-surface, border-surface... */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-card: 6px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* Foco visível e consistente para quem navega pelo teclado */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
