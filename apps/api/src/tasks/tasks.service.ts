@@ -54,7 +54,17 @@ export class TasksService {
       description: dto.description,
       status: dto.status,
       priority: dto.priority,
-      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      dueDate: this.toDueDate(dto.dueDate),
     };
+  }
+
+  // Três casos diferentes para o Prisma:
+  //   undefined -> campo não enviado: não mexe no prazo
+  //   null      -> "sem prazo": grava NULL no banco
+  //   "2026-..."-> novo prazo
+  private toDueDate(value: string | null | undefined): Date | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    return new Date(value);
   }
 }

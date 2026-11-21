@@ -38,7 +38,9 @@ export class CreateTaskDto {
   priority?: TaskPriority;
 
   // Data no formato ISO 8601, ex.: "2026-12-31" ou "2026-12-31T18:00:00Z".
+  // null = "sem prazo" (no PATCH, remove o prazo que existia). O @IsOptional
+  // deixa passar null e undefined sem rodar o @IsDateString.
   @IsOptional()
   @IsDateString({}, { message: 'dueDate deve ser uma data ISO 8601' })
-  dueDate?: string;
+  dueDate?: string | null;
 }
