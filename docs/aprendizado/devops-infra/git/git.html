@@ -1,0 +1,453 @@
+<title>Aula Git</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<style>
+  .log { font-family: var(--font-mono); font-size: 0.84rem; background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0; overflow-x: auto; line-height: 1.8; }
+  .log .h { color: var(--warn); } .log .t { color: var(--accent); font-weight: 600; } .log .ig { color: var(--muted); }
+  .anatomy { font-family: var(--font-mono); font-size: 0.95rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-wrap: wrap; gap: 4px 2px; align-items: baseline; }
+  .anatomy span { padding: 2px 6px; border-radius: 4px; }
+  .anatomy .ty { background: var(--code-bg); color: var(--ok); font-weight: 600; } .anatomy .sc { background: var(--code-bg); color: var(--accent); } .anatomy .ds { background: var(--code-bg); }
+  .anatomy-legend { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); font-size: 0.92rem; }
+  @media (min-width: 700px) { .anatomy-legend { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>devops-infra</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>Git, .gitignore e Conventional Commits</h1>
+    <p class="lead">Como o FlowMind passou a guardar cada etapa da construção em fotos com legenda, sem nunca deixar uma senha ou um node_modules entrar no álbum.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li>1 · Docker</li><li>2 · PostgreSQL</li><li>3 · Redis</li><li>4 · Docker Compose</li><li>5 · Node.js</li><li>6 · NestJS</li><li>7 · Prisma</li>
+      <li>8 · Validação (DTOs)</li><li>9 · JWT + bcrypt</li><li>10 · Vitest</li><li aria-current="step">11 · Git</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>Nenhuma aula é obrigatória.</strong> Ajuda ter visto as aulas 4 e 6: os commits contam a história delas.</li>
+        <li><strong>Terminal:</strong> no VS Code, <em>Terminal → New Terminal</em>, dentro da pasta <code>flowmind-ai</code>.</li>
+        <li><strong><code>.env</code>:</strong> arquivo com senhas e segredos que existe só no seu computador e nunca deve ir para a internet.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>flowmind-final-agora-vai-2</h3>
+        <ul>
+          <li>Você muda o login, quebra tudo e não lembra como estava ontem.</li>
+          <li>"Cópias de segurança" viram pastas com nomes cada vez piores.</li>
+          <li>O notebook estraga e o projeto vai junto.</li>
+          <li>O recrutador vê o resultado, mas não <strong>como</strong> você chegou nele.</li>
+        </ul>
+        <p>O <strong>Git</strong> tira fotos (<strong>commits</strong>) do projeto quando você manda e deixa voltar a qualquer uma. O <strong>.gitignore</strong> diz o que fica de fora; o <strong>Conventional Commits</strong> padroniza as legendas.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>O álbum de fotos da reforma</h3>
+        <ul>
+          <li><strong>Commit</strong> = foto datada com legenda: "instalei a elétrica da cozinha".</li>
+          <li><strong>Staging</strong> = o enquadramento: você escolhe o que aparece antes de clicar.</li>
+          <li><strong>.gitignore</strong> = "não fotografe o cofre (senhas) nem o lixo (o que dá para refazer)".</li>
+          <li><strong>Conventional Commits</strong> = toda legenda começa pelo tipo de serviço, para achar rápido.</li>
+        </ul>
+        <p class="limit">Onde a analogia falha: uma foto real guarda a casa inteira de novo. O Git guarda uma cópia só de cada arquivo que não mudou, e as fotos apontam para ela.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As três áreas do Git</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Os arquivos vão da pasta de trabalho para o staging com git add, e do staging para o histórico com git commit. O .gitignore filtra a pasta de trabalho: .env, node_modules e dist nunca chegam ao staging. git restore --staged tira um arquivo do staging.">
+          <defs>
+            <marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="10" y="30" width="250" height="150" rx="10" class="box"/>
+          <text x="26" y="56" class="title">Pasta de trabalho</text>
+          <text x="26" y="78" class="small">o que você edita</text>
+          <text x="26" y="104" class="mono">docker-compose.yml</text>
+          <text x="26" y="124" class="mono">apps/api/src/main.ts</text>
+          <text x="26" y="144" class="mono bad-text">.env  node_modules/</text>
+          <text x="26" y="164" class="mono bad-text">dist/  src/generated/</text>
+
+          <rect x="325" y="30" width="250" height="150" rx="10" class="hl"/>
+          <text x="341" y="56" class="title accent-text">Staging (index)</text>
+          <text x="341" y="78" class="small">a foto sendo montada</text>
+          <text x="341" y="104" class="mono">docker-compose.yml</text>
+          <text x="341" y="124" class="mono">.env.example</text>
+          <text x="341" y="144" class="small">git diff --cached mostra</text>
+
+          <rect x="640" y="30" width="250" height="150" rx="10" class="state ok"/>
+          <text x="656" y="56" class="title ok-text">Histórico (.git)</text>
+          <text x="656" y="78" class="small">as fotos tiradas</text>
+          <text x="656" y="104" class="mono">d0eca83 chore(infra)…</text>
+          <text x="656" y="124" class="mono">38da548 feat(api)…</text>
+          <text x="656" y="144" class="small">git log mostra</text>
+
+          <line x1="260" y1="92" x2="321" y2="92" class="edge" marker-end="url(#g1)"/>
+          <text x="292" y="84" text-anchor="middle" class="label">git add</text>
+          <line x1="575" y1="92" x2="636" y2="92" class="edge" marker-end="url(#g1)"/>
+          <text x="606" y="84" text-anchor="middle" class="label">git commit</text>
+          <line x1="321" y1="128" x2="264" y2="128" class="edge dashed" marker-end="url(#g1)"/>
+          <text x="292" y="146" text-anchor="middle" class="label">restore --staged</text>
+
+          <rect x="10" y="204" width="565" height="44" rx="8" class="state bad"/>
+          <text x="26" y="231" class="bad-text">.gitignore: o que está em vermelho nunca passa para o staging com git add</text>
+          <line x1="135" y1="180" x2="135" y2="200" class="edge dashed" marker-end="url(#g1)"/>
+        </svg>
+      </div>
+      <figcaption>Cada área pode ter uma versão diferente do mesmo arquivo. O <code>git status</code> mostra as duas colunas: a 1ª letra é o staging, a 2ª é a pasta (<code>MM</code> = alterado nas duas).</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>O histórico do FlowMind</h2>
+<pre class="log"><span class="ig">$ git log --oneline</span>
+<span class="h">cb05c5f</span> <span class="t">docs:</span> adiciona trilha de aprendizado do projeto (aulas 1 a 10)
+<span class="h">81d9cc7</span> <span class="t">feat(api):</span> adiciona autenticação JWT e CRUD de tarefas
+<span class="h">38da548</span> <span class="t">feat(api):</span> cria API NestJS com Prisma e PostgreSQL
+<span class="h">d0eca83</span> <span class="t">chore(infra):</span> configura PostgreSQL e Redis com Docker Compose</pre>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 170" role="img" aria-label="Linha do tempo com quatro commits na branch main: Fase 1 infraestrutura Docker, Fase 2 API NestJS e Prisma, Fase 3 autenticação e CRUD de tarefas, e as aulas. Cada commit aponta para o anterior.">
+          <defs>
+            <marker id="g2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <text x="10" y="22" class="small">branch main · o mais antigo à esquerda · cada commit aponta para o pai</text>
+          <circle cx="90" cy="70" r="16" class="hl"/><circle cx="320" cy="70" r="16" class="hl"/><circle cx="550" cy="70" r="16" class="hl"/><circle cx="780" cy="70" r="16" class="state ok"/>
+          <line x1="304" y1="70" x2="110" y2="70" class="edge" marker-end="url(#g2)"/>
+          <line x1="534" y1="70" x2="340" y2="70" class="edge" marker-end="url(#g2)"/>
+          <line x1="764" y1="70" x2="570" y2="70" class="edge" marker-end="url(#g2)"/>
+          <text x="205" y="62" text-anchor="middle" class="label">pai</text>
+          <text x="90" y="110" text-anchor="middle" class="mono">d0eca83</text><text x="90" y="128" text-anchor="middle" class="small">Fase 1 · Docker</text><text x="90" y="146" text-anchor="middle" class="small">3 arquivos</text>
+          <text x="320" y="110" text-anchor="middle" class="mono">38da548</text><text x="320" y="128" text-anchor="middle" class="small">Fase 2 · NestJS + Prisma</text><text x="320" y="146" text-anchor="middle" class="small">27 arquivos</text>
+          <text x="550" y="110" text-anchor="middle" class="mono">81d9cc7</text><text x="550" y="128" text-anchor="middle" class="small">Fase 3 · login + tarefas</text><text x="550" y="146" text-anchor="middle" class="small">19 arquivos</text>
+          <text x="780" y="110" text-anchor="middle" class="mono">cb05c5f</text><text x="780" y="128" text-anchor="middle" class="small">aulas 1 a 10</text><text x="780" y="146" text-anchor="middle" class="small ok-text">HEAD (atual)</text>
+        </svg>
+      </div>
+      <figcaption>A pasta já estava na Fase 3 quando o repositório foi criado. Para o commit 2 mostrar a Fase 2, as versões antigas de 5 arquivos foram colocadas só no staging, e o retrato foi compilado e testado antes de virar commit.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Anatomia de uma mensagem</h2>
+    <p class="anatomy"><span class="ty">feat</span><span class="sc">(api)</span>:<span class="ds">adiciona autenticação JWT e CRUD de tarefas</span></p>
+    <div class="anatomy-legend">
+      <p><strong style="color: var(--ok)">tipo</strong>: em inglês, diz a natureza da mudança.</p>
+      <p><strong style="color: var(--accent)">escopo</strong>: opcional, a parte do projeto afetada.</p>
+      <p><strong>descrição</strong>: em português, no presente, curta, sem ponto final.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tipo</th><th>Quando</th><th>Exemplo no FlowMind</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">feat</td><td>funcionalidade nova</td><td class="mono">feat(api): adiciona autenticação JWT</td></tr>
+          <tr><td class="mono">fix</td><td>correção de bug</td><td class="mono">fix(api): impede ler tarefa de outro usuário</td></tr>
+          <tr><td class="mono">docs</td><td>só documentação</td><td class="mono">docs: adiciona aula de Git</td></tr>
+          <tr><td class="mono">chore</td><td>configuração/manutenção</td><td class="mono">chore(infra): configura Docker Compose</td></tr>
+          <tr><td class="mono">refactor</td><td>reorganiza sem mudar comportamento</td><td class="mono">refactor(api): extrai toData</td></tr>
+          <tr><td class="mono">test</td><td>só testes</td><td class="mono">test(api): cobre e-mail inexistente</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>O .gitignore, comentado</h2>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>flowmind-ai/.gitignore</span><span>gitignore</span></div>
+<pre>node_modules/   <span class="c"># recriado com npm install</span>
+.env            <span class="c"># senhas e segredos</span>
+.env.*          <span class="c"># .env.local, .env.production…</span>
+<span class="k">!</span>.env.example   <span class="c"># EXCETO o modelo (o ! desfaz)</span>
+dist/           <span class="c"># recriado com npm run build</span>
+.next/          <span class="c"># build do futuro apps/web</span>
+*.tsbuildinfo   <span class="c"># cache do TypeScript</span>
+coverage/       <span class="c"># relatório de testes</span>
+apps/api/src/generated/ <span class="c"># Prisma Client</span></pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>conferindo antes do 1º commit</span><span>bash</span></div>
+<pre><span class="c"># o que está sendo ignorado (!!)</span>
+git status --ignored --short
+<span class="e">!! .env</span>
+<span class="e">!! apps/api/.env</span>
+<span class="e">!! apps/api/dist/</span>
+<span class="e">!! apps/api/node_modules/</span>
+<span class="e">!! apps/api/src/generated/</span>
+
+<span class="c"># qual regra ignora um arquivo?</span>
+git check-ignore -v .env
+<span class="s">.gitignore:9:.env	.env</span></pre>
+      </div>
+    </div>
+    <p class="callout"><strong>Regra prática:</strong> ignore o que é segredo ou o que dá para recriar com um comando. O <code>package-lock.json</code> entra: é a receita que recria as mesmas versões em outra máquina.</p>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Git</dt><dd>Programa que guarda o histórico de mudanças e deixa voltar a qualquer ponto.</dd></div>
+      <div><dt>Repositório</dt><dd>Pasta controlada pelo Git; o histórico fica em <code>.git</code>.</dd></div>
+      <div><dt>Pasta de trabalho</dt><dd>Os arquivos como estão agora, do jeito que você edita.</dd></div>
+      <div><dt>Staging (index)</dt><dd>Onde você monta o próximo commit com <code>git add</code>.</dd></div>
+      <div><dt>Commit</dt><dd>Foto do projeto com mensagem, autor, data e um hash.</dd></div>
+      <div><dt>Hash</dt><dd>Código único do commit, como <code>d0eca83</code>.</dd></div>
+      <div><dt>Branch</dt><dd>Linha do histórico com nome; a principal é <code>main</code>.</dd></div>
+      <div><dt>Untracked</dt><dd>Arquivo que o Git vê, mas ainda não versiona (<code>??</code>).</dd></div>
+      <div><dt>.gitignore</dt><dd>Padrões de nomes que o Git deve ignorar.</dd></div>
+      <div><dt>Conventional Commits</dt><dd>Padrão <code>tipo(escopo): descrição</code>.</dd></div>
+      <div><dt>Remoto</dt><dd>Cópia do repositório num servidor (GitHub), recebe <code>git push</code>.</dd></div>
+      <div><dt>LF / CRLF</dt><dd>Fim de linha Linux/macOS × Windows; os avisos são só lembretes.</dd></div>
+      <div><dt>Blob</dt><dd>O conteúdo de um arquivo guardado dentro do Git.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Experimente numa pasta de treino</h2>
+    <p class="prose">Fora do projeto, para não mexer no histórico real do FlowMind.</p>
+    <ol class="steps">
+      <li>
+        <h3>Crie o repositório de treino</h3>
+        <div class="code"><pre>mkdir ~/treino-git &amp;&amp; cd ~/treino-git
+git init -b main</pre></div>
+        <p class="expect">Esperado: <b>Initialized empty Git repository</b></p>
+      </li>
+      <li>
+        <h3>Crie um segredo e um arquivo normal</h3>
+        <div class="code"><pre>echo "SENHA=123" &gt; .env
+echo "# Meu treino" &gt; README.md
+git status --short</pre></div>
+        <p class="expect">Esperado: <b>?? .env</b> e <b>?? README.md</b>. O segredo está prestes a vazar.</p>
+      </li>
+      <li>
+        <h3>Proteja o segredo</h3>
+        <div class="code"><pre>echo ".env" &gt; .gitignore
+git status --short --ignored</pre></div>
+        <p class="expect">Esperado: <b>!! .env</b>, e <code>.gitignore</code>/<code>README.md</code> como <code>??</code>.</p>
+      </li>
+      <li>
+        <h3>Dois commits, um assunto cada</h3>
+        <div class="code"><pre>git add .gitignore &amp;&amp; git commit -m "chore: ignora arquivos .env"
+git add README.md  &amp;&amp; git commit -m "docs: adiciona README"
+git log --oneline</pre></div>
+        <p class="expect">Esperado: <b>2 commits</b>, o mais novo em cima.</p>
+      </li>
+      <li>
+        <h3>Staging diferente da pasta</h3>
+        <div class="code"><pre>echo "linha nova" &gt;&gt; README.md &amp;&amp; git add README.md
+echo "outra linha" &gt;&gt; README.md
+git status --short</pre></div>
+        <p class="expect">Esperado: <b>MM README.md</b>. Compare <code>git diff --cached</code> com <code>git diff</code>.</p>
+      </li>
+      <li>
+        <h3>Prove que o .gitignore não protege o passado</h3>
+        <div class="code"><pre>git add -f .env &amp;&amp; git commit -m "chore: oops"
+git show HEAD:.env</pre></div>
+        <p class="expect">Esperado: <b>SENHA=123</b>. A senha está no histórico, mesmo com o .gitignore.</p>
+      </li>
+      <li>
+        <h3>Desfaça</h3>
+        <div class="code"><pre>cd ~ &amp;&amp; rm -rf ~/treino-git</pre></div>
+        <p>Num projeto real, segredo commitado deve ser <strong>trocado</strong>.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr class="danger"><td>Senha aparece no GitHub</td><td><code>.env</code> commitado</td><td>Ignore antes do 1º commit; se vazou, troque a senha</td></tr>
+          <tr><td>Milhares de arquivos no status</td><td><code>node_modules</code> não ignorado</td><td><code>node_modules/</code> no <code>.gitignore</code>; <code>git rm -r --cached node_modules</code></td></tr>
+          <tr><td>.gitignore "não funciona"</td><td>O arquivo já estava versionado</td><td><code>git rm --cached arquivo</code>; investigue com <code>git check-ignore -v</code></td></tr>
+          <tr><td class="mono">fatal: not a git repository</td><td>Fora da pasta do repositório</td><td><code>cd flowmind-ai</code></td></tr>
+          <tr><td class="mono">Author identity unknown</td><td>Git sem nome/e-mail</td><td><code>git config --global user.name</code> e <code>user.email</code></td></tr>
+          <tr><td>Histórico ilegível</td><td>Commits gigantes, mensagens "update"</td><td>Um assunto por commit, <code>tipo(escopo): descrição</code></td></tr>
+          <tr><td class="mono">LF will be replaced by CRLF</td><td>Aviso normal do Git no Windows</td><td>Nada a fazer; o commit foi feito</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. O que são commit, staging e .gitignore na reforma?</summary><p>Foto com legenda; o enquadramento antes de clicar; a regra "não fotografe o cofre nem o lixo".</p></details>
+      <details><summary>2. Por que node_modules fica fora, mas package-lock.json entra?</summary><p><code>node_modules</code> é recriado pelo <code>npm install</code>; o lock é a receita que garante as mesmas versões em outra máquina.</p></details>
+      <details><summary>3. Por que !.env.example vem depois de .env.*?</summary><p>A última regra que combina é a que vale; o <code>!</code> devolve o modelo sem segredos ao Git.</p></details>
+      <details><summary>4. Classifique: rota nova, correção do 500, atualização de aula.</summary><p><code>feat(api)</code>, <code>fix(api)</code> e <code>docs</code>.</p></details>
+      <details><summary>5. Ignorar um arquivo depois de commitá-lo protege a senha?</summary><p>Não. O commit antigo ainda guarda a senha; é preciso trocá-la.</p></details>
+    </div>
+  </section>
+</main>

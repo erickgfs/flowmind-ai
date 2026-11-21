@@ -14,6 +14,7 @@ Leia na ordem. Cada aula tem um `.md` (texto completo) e um `.html` (aula visual
 | 8 | Validação com DTOs (class-validator) | backend | [class-validator.md](backend/class-validator/class-validator.md) | [abrir](https://claude.ai/artifact/1Txi2dM71ypUPJDt88vktu) |
 | 9 | Autenticação com JWT e bcrypt | backend | [jwt-bcrypt.md](backend/jwt-bcrypt/jwt-bcrypt.md) | [abrir](https://claude.ai/artifact/DgRCz9NefojNgi4jwHxfBt) |
 | 10 | Testes unitários com Vitest | testing-quality | [vitest.md](testing-quality/vitest/vitest.md) | [abrir](https://claude.ai/artifact/6sXJM8gqc3tuLaVA2VMDRL) |
+| 11 | Git, .gitignore e Conventional Commits | devops-infra | [git.md](devops-infra/git/git.md) | [abrir](https://claude.ai/artifact/DwSyKTh3ziTrpTNcWVJdGK) |
 
 > **Fase 3 (2026-11-07):** a aula 6 (NestJS) ganhou a seção *Evolução Prática — CRUD REST protegido e o caminho completo de um pedido*.
 
