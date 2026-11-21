@@ -168,8 +168,9 @@ details p { color: var(--fg); }
     <h1>NestJS, do zero</h1>
     <p class="lead">O framework que organiza a API do FlowMind em módulos, controllers e services, e monta as peças sozinho com injeção de dependências.</p>
     <ol class="trail" aria-label="Trilha de aulas">
-      <li>1 · Docker</li><li>2 · PostgreSQL</li><li>3 · Redis</li><li>4 · Docker Compose</li><li>5 · Node.js</li>
-      <li aria-current="step">6 · NestJS</li><li>7 · Prisma</li><li>8 · Validação (DTOs)</li><li>9 · JWT + bcrypt</li><li>10 · Vitest</li>
+      <li>1 · Docker</li><li>2 · PostgreSQL</li><li>3 · Redis</li><li>4 · Compose</li><li>5 · Node.js</li>
+      <li aria-current="step">6 · NestJS</li><li>7 · Prisma</li><li>8 · DTOs</li><li>9 · JWT</li><li>10 · Vitest</li><li>11 · Git</li>
+      <li>12 · React</li><li>13 · Next.js</li><li>14 · Tailwind</li><li>15 · Zustand</li><li>16 · dnd-kit</li>
     </ol>
   </header>
 
@@ -736,6 +737,91 @@ imports: [AuthModule]</pre>
       <details><summary>7. Em que ordem rodam Guard, Pipe e Controller?</summary><p>Guard → Pipes → Controller: primeiro decide se entra, depois valida, por fim trabalha com dados confiáveis.</p></details>
       <details><summary>8. Por que o DELETE responde 204?</summary><p>Deu certo e não há nada para devolver: o recurso não existe mais.</p></details>
       <details><summary>9. E se o AuthModule não exportar o AuthGuard?</summary><p>O <code>TasksModule</code> não consegue usá-lo e a API não sobe: <code>Nest can't resolve dependencies of the AuthGuard (?)</code>.</p></details>
+    </div>
+  </section>
+  <section id="cors">
+    <p class="eyebrow"><b>evolução prática</b> · fase 4 do flowmind-ai</p>
+    <h2>CORS: liberando a API para o front-end</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>O curl funciona, o navegador não</h3>
+        <p>O front (Next.js, aula 13) roda em <code>localhost:3001</code> e a API em <code>localhost:3000</code>. Para o navegador, são <strong>origens diferentes</strong>:</p>
+<pre class="code" style="margin:0;padding:10px;white-space:pre-wrap;font-family:var(--font-mono);font-size:0.78rem">Access to fetch … from origin 'http://localhost:3001'
+has been blocked by CORS policy</pre>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>A portaria do condomínio</h3>
+        <p>O navegador é o <strong>porteiro</strong> que protege o morador. Um site só lê dados de outro endereço se esse endereço deixou na portaria uma <strong>lista de visitantes autorizados</strong>.</p>
+        <p class="limit">Onde falha: o pedido muitas vezes chega ao servidor; o navegador só impede que o site leia a resposta.</p>
+      </div>
+    </div>
+
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 250" role="img" aria-label="Antes de um PATCH com Authorization, o navegador manda um OPTIONS de preflight. A API responde 204 com Access-Control-Allow-Origin igual a localhost:3001, e só então o navegador manda o PATCH de verdade. Para uma origem não autorizada, o cabeçalho não vem e o navegador bloqueia.">
+          <defs><marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+          <rect x="20" y="10" width="180" height="40" rx="8" class="box"/><text x="110" y="35" text-anchor="middle">Navegador (:3001)</text>
+          <rect x="700" y="10" width="180" height="40" rx="8" class="hl"/><text x="790" y="35" text-anchor="middle" class="accent-text">API NestJS (:3000)</text>
+          <line x1="110" y1="50" x2="110" y2="240" class="lifeline"/><line x1="790" y1="50" x2="790" y2="240" class="lifeline"/>
+          <line x1="110" y1="80" x2="786" y2="80" class="edge" marker-end="url(#c1)"/>
+          <text x="450" y="73" text-anchor="middle" class="label">1 · OPTIONS /tasks/:id  "posso?"  (preflight)</text>
+          <line x1="790" y1="120" x2="114" y2="120" class="edge dashed" marker-end="url(#c1)"/>
+          <text x="450" y="113" text-anchor="middle" class="label">204 · Access-Control-Allow-Origin: http://localhost:3001</text>
+          <line x1="110" y1="160" x2="786" y2="160" class="edge" marker-end="url(#c1)"/>
+          <text x="450" y="153" text-anchor="middle" class="label">2 · PATCH /tasks/:id (o pedido de verdade)</text>
+          <rect x="250" y="190" width="400" height="44" rx="8" class="state bad"/>
+          <text x="450" y="210" text-anchor="middle" class="bad-text">Origin: http://site-malicioso.com</text>
+          <text x="450" y="226" text-anchor="middle" class="small">sem Allow-Origin na resposta → navegador bloqueia a leitura</text>
+        </svg>
+      </div>
+      <figcaption>Pedidos com <code>Authorization</code>, JSON, <code>PATCH</code> ou <code>DELETE</code> disparam o preflight. Testado com <code>curl</code> nas duas origens.</figcaption>
+    </figure>
+
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>apps/api/src/main.ts</span><span>TS</span></div>
+<pre>app.enableCors({
+  origin: (process.env.WEB_ORIGIN
+    ?? <span class="s">'http://localhost:3001'</span>)
+    .split(<span class="s">','</span>)      <span class="c">// várias? vírgula</span>
+    .map((o) =&gt; o.trim()),
+});</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>bônus · tasks.service.ts</span><span>TS</span></div>
+<pre><span class="c">// para o Prisma: undefined = "não mexa"</span>
+<span class="k">private</span> toDueDate(v: <span class="k">string</span> | <span class="k">null</span> | <span class="k">undefined</span>) {
+  <span class="k">if</span> (v === <span class="k">undefined</span>) <span class="k">return undefined</span>; <span class="c">// mantém</span>
+  <span class="k">if</span> (v === <span class="k">null</span>) <span class="k">return null</span>;           <span class="c">// sem prazo</span>
+  <span class="k">return new</span> Date(v);                      <span class="c">// novo prazo</span>
+}</pre>
+      </div>
+    </div>
+    <p class="callout"><strong>CORS não é autenticação.</strong> Ele só controla quais sites, dentro de um navegador, leem as respostas. O <code>curl</code> e scripts ignoram o CORS; quem protege os dados é o AuthGuard com JWT.</p>
+
+    <dl class="glossary">
+      <div><dt>Origem</dt><dd>Protocolo + domínio + porta: <code>:3001</code> e <code>:3000</code> são origens diferentes.</dd></div>
+      <div><dt>Same-origin policy</dt><dd>O navegador só lê respostas da própria origem, salvo autorização.</dd></div>
+      <div><dt>CORS</dt><dd>Cabeçalhos com que a API autoriza outras origens.</dd></div>
+      <div><dt>Preflight</dt><dd><code>OPTIONS</code> que pergunta "posso?" antes do pedido real.</dd></div>
+    </dl>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Armadilha</th><th>Consequência</th><th>Correção</th></tr></thead>
+      <tbody>
+        <tr class="danger"><td><code>origin: '*'</code></td><td>qualquer site usa a API pelo navegador de quem está logado</td><td>Liste as origens em <code>WEB_ORIGIN</code></td></tr>
+        <tr><td><code>http://localhost:3001/</code> (com barra)</td><td>não casa com o cabeçalho <code>Origin</code></td><td>Sem barra no fim</td></tr>
+        <tr><td>"Bug no servidor"</td><td>curl funciona, navegador não</td><td>Veja o <code>OPTIONS</code> na aba Network</td></tr>
+        <tr><td>Remover prazo não funcionava</td><td><code>null</code> convertido em <code>undefined</code></td><td>Tratar os três casos (<code>fix(api)</code>)</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="quiz">
+      <details><summary>10. Por que o curl funcionava e o front não?</summary><p>CORS é uma regra do navegador; o curl não é um navegador.</p></details>
+      <details><summary>11. O que é o preflight?</summary><p>Um <code>OPTIONS</code> que pergunta se a origem, o método e os cabeçalhos são permitidos antes do pedido real.</p></details>
+      <details><summary>12. undefined × null no Prisma?</summary><p><code>undefined</code> = não mexer no campo; <code>null</code> = gravar NULL.</p></details>
     </div>
   </section>
 </main>

@@ -1,5 +1,5 @@
 # 🎓 Aula: NestJS (do zero)
-> **Categoria:** `backend` | **Registrado/Atualizado no Projeto:** `flowmind-ai` | **Nível:** iniciante · aula 6 de 10 da trilha
+> **Categoria:** `backend` | **Registrado/Atualizado no Projeto:** `flowmind-ai` | **Nível:** iniciante · aula 6 da trilha
 >
 > 🖼️ **Aula visual:** [artefato online](https://claude.ai/artifact/Geb9ZgxQax9DtnMzji9SnG) · arquivo local [`nestjs.html`](./nestjs.html)
 
@@ -317,4 +317,104 @@ Guard → Pipes → Controller. Primeiro decide se o pedido pode entrar; só dep
 <details><summary>7. O que acontece se o <code>AuthModule</code> não exportar o <code>AuthGuard</code>?</summary>
 
 O `TasksModule` não consegue usar o Guard e a API não sobe: `Nest can't resolve dependencies of the AuthGuard (?)`.
+</details>
+
+---
+
+## 🚀 Evolução Prática (Projeto: flowmind-ai) - CORS: liberando a API para o front-end
+
+> Fase 4 do FlowMind: o front em Next.js ([aula 13](../../frontend/nextjs/nextjs.md)) roda em `http://localhost:3001` e chama a API em `http://localhost:3000`. Sem configuração, o **navegador** bloqueia isso.
+
+### O problema
+Com a API funcionando no `curl`, o primeiro login pelo front falha com este erro no console do navegador (F12):
+```
+Access to fetch at 'http://localhost:3000/auth/login' from origin 'http://localhost:3001'
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present...
+```
+O `curl` funcionava porque **CORS é uma regra do navegador**, não do servidor nem da rede.
+
+**Analogia: a portaria do condomínio.** O navegador é o **porteiro** que protege o morador (o usuário). Um site só pode buscar dados de **outro endereço** se esse endereço tiver deixado, na portaria, uma **lista de visitantes autorizados**. A API precisa dizer: "o `localhost:3001` pode entrar". *Onde falha:* um porteiro de verdade barra a pessoa **antes** de ela entrar. No CORS, o pedido muitas vezes **chega** ao servidor; o navegador só impede que o site **leia a resposta**.
+
+### Glossário novo
+| Termo | Em uma frase |
+|---|---|
+| **Origem (origin)** | Protocolo + domínio + porta: `http://localhost:3001` e `http://localhost:3000` são origens **diferentes**. |
+| **Same-origin policy** | Regra do navegador: um site só lê respostas da própria origem, salvo autorização. |
+| **CORS** | *Cross-Origin Resource Sharing*: cabeçalhos com que a API autoriza outras origens a ler suas respostas. |
+| **Preflight** | Pedido `OPTIONS` que o navegador faz **antes** de certos pedidos (com `Authorization`, JSON, `PATCH`...) para perguntar se pode. |
+| **`Access-Control-Allow-Origin`** | Cabeçalho da resposta que diz qual origem está autorizada. |
+
+### Como ficou no projeto
+`apps/api/src/main.ts`:
+```ts
+app.enableCors({
+  origin: (process.env.WEB_ORIGIN ?? 'http://localhost:3001')
+    .split(',')                // várias origens? separe por vírgula no .env
+    .map((o) => o.trim()),
+});
+```
+`apps/api/.env.example`:
+```bash
+WEB_ORIGIN=http://localhost:3001   # em produção: https://app.flowmind.dev (nunca "*" com login)
+```
+
+### Por trás dos panos: o preflight
+Um `PATCH /tasks/:id` com `Authorization` e JSON vira **dois** pedidos no navegador:
+```
+1. OPTIONS /tasks/:id                            ← "posso?"
+   Origin: http://localhost:3001
+   Access-Control-Request-Method: PATCH
+   Access-Control-Request-Headers: authorization,content-type
+   ⇢ 204  Access-Control-Allow-Origin: http://localhost:3001
+          Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE
+          Access-Control-Allow-Headers: authorization,content-type
+2. PATCH /tasks/:id  (o pedido de verdade, só se o 1 autorizou)
+```
+Testamos com `curl` as duas situações: com `Origin: http://localhost:3001` a resposta traz `Access-Control-Allow-Origin`; com `Origin: http://site-malicioso.com` o cabeçalho **não vem**, e o navegador desse site bloqueia a leitura.
+
+**CORS não é autenticação.** Ele só controla quais **sites, dentro de um navegador**, podem ler as respostas. Um script ou o `curl` ignoram o CORS. Quem protege os dados continua sendo o `AuthGuard` com JWT.
+
+### Bônus da Fase 4: `undefined` × `null` no Prisma
+Ao criar o diálogo de edição, descobrimos que **não dava para remover o prazo** de uma tarefa: o front mandava `dueDate: null`, a validação aceitava (`@IsOptional` deixa passar `null`), mas o service convertia `null` em `undefined`, e para o Prisma **`undefined` significa "não mexa neste campo"**. A correção separou os três casos:
+```ts
+private toDueDate(value: string | null | undefined): Date | null | undefined {
+  if (value === undefined) return undefined;   // campo não enviado: mantém o prazo
+  if (value === null) return null;             // "sem prazo": grava NULL no banco
+  return new Date(value);                      // novo prazo
+}
+```
+Ficou num commit próprio, `fix(api): permite remover o prazo de uma tarefa`, porque é uma correção, não uma funcionalidade.
+
+### Experimente
+```bash
+# com a API rodando:
+curl -s -o /dev/null -D - -X OPTIONS localhost:3000/tasks \
+  -H "Origin: http://localhost:3001" -H "Access-Control-Request-Method: PATCH" | grep -i access-control
+# esperado: Access-Control-Allow-Origin: http://localhost:3001 (e os métodos liberados)
+
+curl -s -o /dev/null -D - -X OPTIONS localhost:3000/tasks \
+  -H "Origin: http://site-malicioso.com" -H "Access-Control-Request-Method: PATCH" | grep -i access-control
+# esperado: nenhuma linha (origem não autorizada)
+```
+Depois, troque `WEB_ORIGIN` para `http://localhost:4000` no `apps/api/.env`, reinicie a API e tente logar pelo front: o console mostra o erro de CORS. **Desfaça** voltando para `http://localhost:3001` e reiniciando.
+
+### Armadilhas novas
+- **`origin: '*'` (qualquer site).** Prático, mas libera qualquer página a usar a API pelo navegador de quem está logado. Liste as origens.
+- **Origem com barra no fim** (`http://localhost:3001/`). Não casa com o cabeçalho `Origin`, que vem sem barra.
+- **Achar que CORS é bug do servidor.** O `curl` funciona e o navegador não: é CORS. Olhe o console do navegador e o pedido `OPTIONS` na aba *Network*.
+
+### Teste seu entendimento (evolução)
+<details><summary>8. Por que o <code>curl</code> funcionava e o front não?</summary>
+
+Porque CORS é uma regra aplicada pelo navegador para proteger o usuário. O `curl` não é um navegador e ignora o CORS.
+</details>
+
+<details><summary>9. O que é o preflight e quando ele acontece?</summary>
+
+Um pedido `OPTIONS` que o navegador faz antes de pedidos "não simples" (com `Authorization`, JSON, `PATCH`, `DELETE`...) para perguntar à API se aquela origem, método e cabeçalhos são permitidos.
+</details>
+
+<details><summary>10. Para o Prisma, qual a diferença entre <code>dueDate: undefined</code> e <code>dueDate: null</code>?</summary>
+
+`undefined` = não mexer no campo. `null` = gravar NULL (sem prazo). Converter um no outro faz o "remover prazo" falhar em silêncio.
 </details>

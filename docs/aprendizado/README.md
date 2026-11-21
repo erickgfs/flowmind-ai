@@ -15,7 +15,14 @@ Leia na ordem. Cada aula tem um `.md` (texto completo) e um `.html` (aula visual
 | 9 | Autenticação com JWT e bcrypt | backend | [jwt-bcrypt.md](backend/jwt-bcrypt/jwt-bcrypt.md) | [abrir](https://claude.ai/artifact/DgRCz9NefojNgi4jwHxfBt) |
 | 10 | Testes unitários com Vitest | testing-quality | [vitest.md](testing-quality/vitest/vitest.md) | [abrir](https://claude.ai/artifact/6sXJM8gqc3tuLaVA2VMDRL) |
 | 11 | Git, .gitignore e Conventional Commits | devops-infra | [git.md](devops-infra/git/git.md) | [abrir](https://claude.ai/artifact/DwSyKTh3ziTrpTNcWVJdGK) |
+| 12 | React | frontend | [react.md](frontend/react/react.md) | [abrir](https://claude.ai/artifact/YLERTgyZjq4kwBBM9f5HKX) |
+| 13 | Next.js (App Router) | frontend | [nextjs.md](frontend/nextjs/nextjs.md) | [abrir](https://claude.ai/artifact/TEpPm7rGCdQt4SeBebTFhK) |
+| 14 | Tailwind CSS v4 e design tokens | frontend | [tailwind-css.md](frontend/tailwind-css/tailwind-css.md) | [abrir](https://claude.ai/artifact/2V76eJVMdrpgaBQLq3pYQk) |
+| 15 | Zustand e sessão no front-end | frontend | [zustand.md](frontend/zustand/zustand.md) | [abrir](https://claude.ai/artifact/Y4W2XrYqAhpub8wwwyM5f3) |
+| 16 | Arrastar e soltar acessível (dnd-kit) | frontend | [dnd-kit.md](frontend/dnd-kit/dnd-kit.md) | [abrir](https://claude.ai/artifact/AdioC3HFjhZjEBwqRn5ZJC) |
 
 > **Fase 3 (2026-11-07):** a aula 6 (NestJS) ganhou a seção *Evolução Prática — CRUD REST protegido e o caminho completo de um pedido*.
 
 > **Fase 3 (2026-11-07):** a aula 10 (Vitest) ganhou a seção *Evolução Prática — Jest × Vitest: o que é igual e o que muda de verdade*.
+
+> **Fase 4 (2026-11-21):** a aula 6 (NestJS) ganhou a seção *Evolução Prática — CORS: liberando a API para o front-end*.

@@ -1,0 +1,355 @@
+<title>Aula Zustand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>frontend</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>Zustand e a sessão no front-end</h1>
+    <p class="lead">Um estado que mora fora dos componentes: qualquer parte da tela lê o usuário logado, e ele sobrevive ao F5.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li>1 · Docker</li><li>2 · PostgreSQL</li><li>3 · Redis</li><li>4 · Compose</li><li>5 · Node.js</li><li>6 · NestJS</li><li>7 · Prisma</li><li>8 · DTOs</li><li>9 · JWT</li><li>10 · Vitest</li><li>11 · Git</li>
+      <li>12 · React</li><li>13 · Next.js</li><li>14 · Tailwind</li><li aria-current="step">15 · Zustand</li><li>16 · dnd-kit</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose"><ul>
+      <li><strong>Aulas 12 (React), 9 (JWT) e 13 (Next.js).</strong></li>
+      <li><strong>localStorage:</strong> armário de textos de cada site dentro do navegador; sobrevive ao F5.</li>
+    </ul></div>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>O recado de mão em mão</h3>
+        <ul>
+          <li>Barra lateral, guarda de rota, cliente da API e botão Sair precisam da sessão.</li>
+          <li>Com <code>useState</code>, o dado é repassado por props por quem nem usa (<em>prop drilling</em>).</li>
+          <li>F5 apaga o estado do React: logout a cada recarga.</li>
+        </ul>
+        <p>O <strong>Zustand</strong> cria uma <strong>store</strong> fora dos componentes; o <code>persist</code> a grava no localStorage.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>O quadro de avisos</h3>
+        <ul>
+          <li><strong>Store</strong> = quadro na parede: quem precisa olha direto nele.</li>
+          <li><strong>Seletor</strong> = cada pessoa olha só a linha que interessa.</li>
+          <li><strong>persist</strong> = foto do quadro no fim do expediente, usada para remontá-lo no dia seguinte (F5).</li>
+        </ul>
+        <p class="limit">Onde falha: o quadro do escritório fica num lugar seguro. O localStorage é legível por qualquer script da página: com XSS, o token pode ser roubado.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quem lê a store, e o caminho do 401</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 300" role="img" aria-label="A store useAuthStore guarda token e user e é salva no localStorage. AuthGate lê o token, AppShell lê o usuário e o logout, AuthScreen chama setSession, e lib/api.ts lê o token com getState. Quando a API responde 401, lib/api chama logout, o token vira null e o AuthGate redireciona para o login.">
+          <defs><marker id="z1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+          <rect x="320" y="100" width="260" height="90" rx="10" class="hl"/>
+          <text x="450" y="128" text-anchor="middle" class="title accent-text">useAuthStore</text>
+          <text x="450" y="150" text-anchor="middle" class="mono">token · user</text>
+          <text x="450" y="170" text-anchor="middle" class="mono">setSession · logout</text>
+
+          <rect x="350" y="240" width="200" height="44" rx="8" class="vol"/>
+          <text x="450" y="267" text-anchor="middle" class="mono">localStorage["flowmind-auth"]</text>
+          <line x1="440" y1="190" x2="440" y2="236" class="edge dashed" marker-end="url(#z1)"/>
+          <line x1="460" y1="236" x2="460" y2="194" class="edge dashed" marker-end="url(#z1)"/>
+          <text x="520" y="218" class="label">persist (F5)</text>
+
+          <rect x="10" y="20" width="220" height="56" rx="8" class="box"/>
+          <text x="24" y="44" class="mono">AuthGate</text><text x="24" y="64" class="small">(s) =&gt; s.token</text>
+          <rect x="10" y="120" width="220" height="56" rx="8" class="box"/>
+          <text x="24" y="144" class="mono">AppShell</text><text x="24" y="164" class="small">(s) =&gt; s.user · logout</text>
+          <rect x="10" y="220" width="220" height="56" rx="8" class="box"/>
+          <text x="24" y="244" class="mono">AuthScreen</text><text x="24" y="264" class="small">setSession após o login</text>
+          <rect x="670" y="20" width="220" height="56" rx="8" class="box"/>
+          <text x="684" y="44" class="mono">lib/api.ts</text><text x="684" y="64" class="small">getState().token (fora do React)</text>
+          <rect x="670" y="160" width="220" height="56" rx="8" class="state bad"/>
+          <text x="684" y="184" class="bad-text">API responde 401</text><text x="684" y="204" class="small">getState().logout()</text>
+
+          <line x1="230" y1="48" x2="320" y2="118" class="edge" marker-end="url(#z1)"/>
+          <line x1="230" y1="148" x2="316" y2="148" class="edge" marker-end="url(#z1)"/>
+          <line x1="230" y1="248" x2="320" y2="180" class="edge" marker-end="url(#z1)"/>
+          <line x1="670" y1="48" x2="580" y2="118" class="edge" marker-end="url(#z1)"/>
+          <line x1="670" y1="188" x2="584" y2="170" class="edge" marker-end="url(#z1)"/>
+          <polyline points="780,76 780,150" class="edge dashed" marker-end="url(#z1)"/>
+          <text x="790" y="118" class="label">token inválido</text>
+          <text x="24" y="98" class="label">token null → /login</text>
+        </svg>
+      </div>
+      <figcaption>Nenhum componente avisa o outro: o <code>logout()</code> muda a store, o AuthGate (que lê <code>token</code>) desenha de novo e redireciona.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>O código, comentado</h2>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>stores/auth-store.ts</span><span>TS</span></div>
+<pre><span class="k">export const</span> useAuthStore = create&lt;AuthState&gt;()(
+  persist(
+    (set) =&gt; ({
+      token: <span class="k">null</span>,
+      user: <span class="k">null</span>,
+      setSession: (token, user) =&gt; set({ token, user }),
+      logout: () =&gt; set({ token: <span class="k">null</span>, user: <span class="k">null</span> }),
+    }),
+    {
+      name: <span class="s">"flowmind-auth"</span>,  <span class="c">// chave no localStorage</span>
+      storage: createJSONStorage(() =&gt; localStorage),
+      partialize: (s) =&gt; ({ token: s.token, user: s.user }),
+    },
+  ),
+);</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>uso · componentes e lib/api.ts</span><span>TS</span></div>
+<pre><span class="c">// ✅ seletor: re-renderiza só se o user mudar</span>
+<span class="k">const</span> user = useAuthStore((s) =&gt; s.user);
+
+<span class="c">// ⚠️ store inteira: re-renderiza por qualquer mudança</span>
+<span class="k">const</span> tudo = useAuthStore();
+
+<span class="c">// fora do React (lib/api.ts)</span>
+<span class="k">const</span> token = useAuthStore.getState().token;
+<span class="k">if</span> (response.status === <span class="v">401</span>)
+  useAuthStore.getState().logout();</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>O dilema: localStorage × cookie httpOnly</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th></th><th>localStorage + Zustand (o nosso)</th><th>Cookie httpOnly</th></tr></thead>
+      <tbody>
+        <tr><td>JavaScript lê?</td><td><span class="pill lost">sim</span></td><td><span class="pill keep">não</span></td></tr>
+        <tr><td>Se houver XSS</td><td>token pode ser roubado</td><td>script age na página, mas não leva o token</td></tr>
+        <tr><td>Envio</td><td>o código coloca no cabeçalho</td><td>automático (exige cuidado com CSRF)</td></tr>
+        <tr><td>Complexidade</td><td>baixa</td><td>maior</td></tr>
+      </tbody>
+    </table></div>
+    <p class="callout"><strong>Decisão do projeto:</strong> localStorage nesta fase de estudo, token de 1 hora; migração para cookie httpOnly registrada como melhoria futura.</p>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Estado global</dt><dd>Dado compartilhado por vários componentes.</dd></div>
+      <div><dt>Prop drilling</dt><dd>Repassar props por vários níveis só para chegar lá embaixo.</dd></div>
+      <div><dt>Store</dt><dd>Objeto com o estado e as ações que o mudam.</dd></div>
+      <div><dt>Seletor</dt><dd><code>(s) =&gt; s.user</code>: escolhe um pedaço do estado.</dd></div>
+      <div><dt>getState()</dt><dd>Lê a store fora de componentes.</dd></div>
+      <div><dt>persist</dt><dd>Middleware que salva e recarrega a store.</dd></div>
+      <div><dt>partialize</dt><dd>Escolhe quais campos salvar.</dd></div>
+      <div><dt>XSS</dt><dd>Script malicioso rodando dentro do seu site.</dd></div>
+      <div><dt>Cookie httpOnly</dt><dd>Cookie que o JavaScript da página não consegue ler.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Experimente no navegador</h2>
+    <ol class="steps">
+      <li><h3>Veja a foto do quadro</h3><p>F12 → Application → Local Storage → <code>flowmind-auth</code>.</p><p class="expect">Esperado: <b>{"state":{"token":"eyJ…","user":{…}},"version":0}</b></p></li>
+      <li><h3>Troque o nome pelo console</h3><div class="code"><pre>const s = JSON.parse(localStorage.getItem("flowmind-auth"));
+s.state.user.name = "Nome Trocado";
+localStorage.setItem("flowmind-auth", JSON.stringify(s));
+location.reload();</pre></div><p class="expect">Esperado: barra lateral com <b>"Nome Trocado"</b> e "NT". O front confia no que está guardado: permissão nunca se decide no front.</p></li>
+      <li><h3>Estrague o token</h3><p>Repita com <code>s.state.token = "invalido"</code>.</p><p class="expect">Esperado: 401 → <code>logout()</code> → <b>/login</b>.</p></li>
+      <li><h3>Clique em Sair</h3><p class="expect">Esperado: <b>"token":null,"user":null</b> na chave.</p></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+      <tbody>
+        <tr><td>Re-render a cada mudança</td><td><code>useAuthStore()</code> sem seletor</td><td>Um seletor por valor</td></tr>
+        <tr><td class="mono">Maximum update depth exceeded</td><td>Seletor que cria objeto novo</td><td>Dois seletores ou <code>useShallow</code></td></tr>
+        <tr><td>Token null no 1º HTML</td><td>Store lida no servidor</td><td>Ler só no navegador (<code>use(browser())</code>)</td></tr>
+        <tr><td>Store gigante</td><td>Dados do servidor guardados "por hábito"</td><td>Global só o que é compartilhado (a sessão)</td></tr>
+        <tr class="danger"><td>"Botão escondido = seguro"</td><td>Permissão decidida no front</td><td>A API decide (401/404)</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. Store, seletor e persist na analogia?</summary><p>Quadro de avisos, a linha que cada um lê, a foto do quadro para remontá-lo no dia seguinte.</p></details>
+      <details><summary>2. Como lib/api.ts lê o token?</summary><p><code>useAuthStore.getState().token</code>: a store existe fora do React.</p></details>
+      <details><summary>3. O que acontece num 401?</summary><p><code>logout()</code> → token null → AuthGate redesenha → <code>/login</code>.</p></details>
+      <details><summary>4. Risco do localStorage?</summary><p>Qualquer script da página lê o token; com XSS, ele pode ser roubado.</p></details>
+      <details><summary>5. Por que as tarefas ficam em useState?</summary><p>Só o quadro as usa e elas vêm da API; global é só o compartilhado.</p></details>
+    </div>
+  </section>
+</main>
