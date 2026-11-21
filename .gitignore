@@ -1,0 +1,36 @@
+# .gitignore da raiz do monorepo FlowMind AI.
+# Os padrões sem "/" no início valem em QUALQUER pasta (apps/api, apps/web, packages/...).
+
+# Dependências (recriadas com `npm install`)
+node_modules/
+
+# Variáveis de ambiente: guardam senhas e segredos (JWT_SECRET, senha do banco).
+# Só os modelos .env.example vão para o Git.
+.env
+.env.*
+!.env.example
+
+# Saídas de build (recriadas com `npm run build`)
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+
+# Relatórios de testes (npm run test:cov)
+coverage/
+
+# Prisma Client gerado (recriado com `npm run prisma:generate`)
+apps/api/src/generated/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Arquivos de sistema e de editores
+.DS_Store
+Thumbs.db
+.idea/
+
+# Configurações locais do Claude Code (pessoais, não do projeto)
+.claude/settings.local.json
