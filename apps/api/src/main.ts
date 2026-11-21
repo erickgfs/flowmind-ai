@@ -14,6 +14,15 @@ async function bootstrap() {
     }),
   );
 
+  // CORS: o front (Next.js em outra porta) é outra "origem" para o navegador.
+  // Sem isto, o navegador bloqueia o front de ler as respostas da API.
+  // Liberamos SÓ as origens listadas em WEB_ORIGIN (separadas por vírgula).
+  app.enableCors({
+    origin: (process.env.WEB_ORIGIN ?? 'http://localhost:3001')
+      .split(',')
+      .map((o) => o.trim()),
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 await bootstrap();
