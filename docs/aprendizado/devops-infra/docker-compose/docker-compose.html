@@ -1,0 +1,606 @@
+<title>Aula Docker Compose</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>devops-infra</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>Docker Compose, do zero</h1>
+    <p class="lead">Um único arquivo descreve o banco e o cache do FlowMind AI. Um comando liga os dois, com os dados guardados fora dos containers e uma checagem que diz quando cada serviço está pronto de verdade.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li>1 · Docker</li>
+      <li>2 · PostgreSQL</li>
+      <li>3 · Redis</li>
+      <li aria-current="step">4 · Docker Compose</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>Aulas 1 a 3:</strong> imagem, container, porta e volume (Docker), e os dois programas que vamos ligar (PostgreSQL e Redis).</li>
+        <li><strong>Variável de ambiente:</strong> um par <code>NOME=valor</code> que um programa lê ao iniciar, para se configurar sem mudar o código. Ex.: <code>POSTGRES_PASSWORD=abc123</code> diz ao PostgreSQL qual senha usar.</li>
+        <li><strong>YAML:</strong> o formato do arquivo. Três regras bastam:</li>
+      </ul>
+    </div>
+    <div class="code">
+      <div class="file"><span>YAML em 30 segundos</span><span>recuo com ESPAÇOS, nunca TAB</span></div>
+<pre><span class="k">chave</span>: valor        <span class="c"># um par nome → valor</span>
+<span class="k">pai</span>:                <span class="c"># os "filhos" ficam recuados</span>
+  <span class="k">filho</span>: valor
+<span class="k">lista</span>:
+  - item 1          <span class="c"># itens de lista começam com "-"</span>
+  - item 2</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>Comandos enormes, toda vez</h3>
+        <p>Só com o Docker, ligar o banco e o cache exige digitar dois <code>docker run</code> cheios de opções (veja abaixo). É fácil errar uma letra ou digitar diferente do colega.</p>
+        <p>O <strong>Docker Compose</strong> deixa você escrever tudo <strong>uma vez</strong> num arquivo, o <code>docker-compose.yml</code>, e ligar tudo com <code>docker compose up -d</code>. O arquivo vira a documentação de "do que este projeto precisa para rodar".</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>A partitura do maestro</h3>
+        <ul>
+          <li>Sem Compose: você explica a cada músico o que tocar, um por um, toda vez.</li>
+          <li>Com Compose: você escreve a <strong>partitura</strong> (o YAML) e entrega ao <strong>maestro</strong> (o comando <code>docker compose</code>).</li>
+          <li>O maestro coordena todos os <strong>músicos</strong> (containers): quem entra, em que porta, com quais instrumentos (volumes).</li>
+        </ul>
+        <p class="limit">Onde a analogia falha: o maestro liga todos ao mesmo tempo. Para um esperar o outro, é preciso dizer explicitamente com <code>depends_on</code>.</p>
+      </div>
+    </div>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>sem Compose</span><span>toda vez, à mão</span></div>
+<pre><span class="k">docker</span> volume create postgres_data
+<span class="k">docker</span> run -d --name flowmind-postgres \
+  --restart unless-stopped \
+  -e POSTGRES_USER=flowmind \
+  -e POSTGRES_PASSWORD=... \
+  -e POSTGRES_DB=flowmind \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:16-alpine
+
+<span class="k">docker</span> volume create redis_data
+<span class="k">docker</span> run -d --name flowmind-redis \
+  --restart unless-stopped \
+  -p 6379:6379 -v redis_data:/data \
+  redis:7-alpine \
+  redis-server --appendonly yes --requirepass ...</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>com Compose</span><span>escrito uma vez no YAML</span></div>
+<pre><span class="k">docker</span> compose up -d
+
+<span class="c"># o que acontece, em ordem:</span>
+<span class="c"># 1. lê o .env e troca cada ${...} do YAML</span>
+<span class="c"># 2. cria a rede flowmind-ai_default</span>
+<span class="c"># 3. cria os volumes (se não existirem)</span>
+<span class="c"># 4. baixa as imagens (se não estiverem no PC)</span>
+<span class="c"># 5. cria e liga os dois containers</span>
+<span class="c"># 6. começa os healthchecks:</span>
+<span class="c">#    em ~10s, os dois ficam (healthy)</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. Arquitetura -->
+  <section>
+    <h2>Quem fala com quem</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 460" role="img" aria-label="O Windows acessa os containers pelo localhost nas portas 5432 e 6379. Dentro do Docker, os dois containers ficam na rede flowmind-ai_default e gravam seus dados em volumes nomeados, que sobrevivem à remoção dos containers.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="arrowhead"/>
+            </marker>
+          </defs>
+
+          <!-- Host -->
+          <rect x="20" y="40" width="220" height="200" rx="10" class="box"/>
+          <text x="36" y="66" class="title">Windows (host)</text>
+          <rect x="36" y="84" width="188" height="42" rx="6" class="chip"/>
+          <text x="130" y="110" text-anchor="middle">VS Code · psql · DBeaver</text>
+          <rect x="36" y="140" width="188" height="42" rx="6" class="box future"/>
+          <text x="130" y="166" text-anchor="middle">API FlowMind (Fase 2)</text>
+          <text x="36" y="214" class="small">conecta via localhost</text>
+
+          <!-- Arquivos do projeto -->
+          <rect x="20" y="280" width="220" height="160" rx="10" class="box"/>
+          <text x="36" y="306" class="title">pasta flowmind-ai/</text>
+          <text x="36" y="334" class="mono">docker-compose.yml</text>
+          <text x="36" y="356" class="mono">.env</text>
+          <text x="80" y="356" class="small">senhas reais, fora do Git</text>
+          <text x="36" y="378" class="mono">.env.example</text>
+          <text x="36" y="420" class="mono">$ docker compose up -d</text>
+
+          <!-- Docker boundary -->
+          <rect x="290" y="20" width="590" height="420" rx="14" class="boundary"/>
+          <text x="306" y="42" class="small">Docker Desktop · engine no WSL2</text>
+
+          <!-- Rede -->
+          <rect x="310" y="56" width="330" height="368" rx="12" class="net"/>
+          <text x="326" y="80" class="mono">rede flowmind-ai_default</text>
+
+          <!-- Postgres -->
+          <rect x="340" y="98" width="270" height="124" rx="8" class="pg"/>
+          <text x="356" y="124" class="title pg-text">postgres</text>
+          <text x="356" y="146" class="mono">flowmind-postgres</text>
+          <text x="356" y="166" class="mono">postgres:16-alpine</text>
+          <text x="356" y="200" class="small">healthcheck: pg_isready</text>
+
+          <!-- Redis -->
+          <rect x="340" y="268" width="270" height="124" rx="8" class="redis"/>
+          <text x="356" y="294" class="title redis-text">redis</text>
+          <text x="356" y="316" class="mono">flowmind-redis</text>
+          <text x="356" y="336" class="mono">redis:7-alpine · AOF · senha</text>
+          <text x="356" y="370" class="small">healthcheck: redis-cli ping</text>
+
+          <!-- interno: hostnames -->
+          <text x="475" y="250" text-anchor="middle" class="small">entre si: hostnames "postgres" e "redis"</text>
+
+          <!-- Volumes -->
+          <path d="M690,128 v62 a85,11 0 0 0 170,0 v-62" class="vol"/>
+          <ellipse cx="775" cy="128" rx="85" ry="11" class="vol"/>
+          <text x="775" y="162" text-anchor="middle" class="mono">postgres_data</text>
+          <text x="775" y="182" text-anchor="middle" class="small">sobrevive ao down</text>
+          <text x="775" y="222" text-anchor="middle" class="mono">/var/lib/postgresql/data</text>
+
+          <path d="M690,298 v62 a85,11 0 0 0 170,0 v-62" class="vol"/>
+          <ellipse cx="775" cy="298" rx="85" ry="11" class="vol"/>
+          <text x="775" y="332" text-anchor="middle" class="mono">redis_data</text>
+          <text x="775" y="352" text-anchor="middle" class="small">sobrevive ao down</text>
+          <text x="775" y="392" text-anchor="middle" class="mono">/data (appendonly.aof)</text>
+
+          <!-- Arestas: container -> volume -->
+          <line x1="610" y1="160" x2="686" y2="160" class="edge" marker-end="url(#arr)"/>
+          <text x="648" y="152" text-anchor="middle" class="label">grava</text>
+          <line x1="610" y1="330" x2="686" y2="330" class="edge" marker-end="url(#arr)"/>
+          <text x="648" y="322" text-anchor="middle" class="label">grava</text>
+
+          <!-- Arestas: host -> containers (porta publicada) -->
+          <line x1="224" y1="105" x2="336" y2="128" class="edge" marker-end="url(#arr)"/>
+          <text x="282" y="106" text-anchor="middle" class="label">localhost:5432</text>
+          <polyline points="224,161 262,161 262,300 336,300" class="edge" marker-end="url(#arr)"/>
+          <text x="300" y="292" text-anchor="middle" class="label">localhost:6379</text>
+
+          <!-- Arquivos -> Docker -->
+          <line x1="240" y1="414" x2="306" y2="414" class="edge" marker-end="url(#arr)"/>
+          <text x="268" y="404" text-anchor="middle" class="label">cria</text>
+        </svg>
+      </div>
+      <figcaption>As setas que atravessam a borda tracejada são as portas publicadas (<code>ports:</code>). É o único caminho do Windows até os containers. Os dados ficam nos volumes, fora do sistema de arquivos descartável de cada container.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 2. Healthcheck -->
+  <section>
+    <h2>"Rodando" não é "pronto"</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 200" role="img" aria-label="O container passa de starting para healthy quando o comando de checagem responde. Se falhar 5 vezes seguidas, a cada 10 segundos, vira unhealthy.">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="arrowhead"/>
+            </marker>
+          </defs>
+          <rect x="20" y="70" width="150" height="56" rx="8" class="state"/>
+          <text x="95" y="96" text-anchor="middle" class="title">Up</text>
+          <text x="95" y="114" text-anchor="middle" class="small">processo iniciou</text>
+
+          <rect x="260" y="70" width="170" height="56" rx="8" class="state"/>
+          <text x="345" y="96" text-anchor="middle" class="title">starting</text>
+          <text x="345" y="114" text-anchor="middle" class="small">banco inicializando</text>
+
+          <rect x="560" y="14" width="200" height="56" rx="8" class="state ok"/>
+          <text x="660" y="40" text-anchor="middle" class="title ok-text">healthy</text>
+          <text x="660" y="58" text-anchor="middle" class="small">aceita conexões</text>
+
+          <rect x="560" y="128" width="200" height="56" rx="8" class="state bad"/>
+          <text x="660" y="154" text-anchor="middle" class="title bad-text">unhealthy</text>
+          <text x="660" y="172" text-anchor="middle" class="small">algo está errado</text>
+
+          <line x1="170" y1="98" x2="256" y2="98" class="edge" marker-end="url(#arr2)"/>
+          <text x="213" y="90" text-anchor="middle" class="label">a cada 10s</text>
+
+          <polyline points="430,90 500,90 500,42 556,42" class="edge" marker-end="url(#arr2)"/>
+          <text x="500" y="34" text-anchor="middle" class="label">teste ok</text>
+          <polyline points="430,106 500,106 500,156 556,156" class="edge" marker-end="url(#arr2)"/>
+          <text x="500" y="178" text-anchor="middle" class="label">5 falhas seguidas</text>
+
+          <text x="780" y="46" class="mono">pg_isready</text>
+          <text x="780" y="62" class="mono">→ "accepting"</text>
+          <text x="780" y="160" class="mono">retries: 5</text>
+          <text x="780" y="176" class="mono">timeout: 5s</text>
+        </svg>
+      </div>
+      <figcaption>Na Fase 2, a API vai usar <code>depends_on: condition: service_healthy</code> para só iniciar quando o banco estiver em <code>healthy</code>. Sem isso, ela tenta conectar enquanto o Postgres ainda está em <code>starting</code> e cai.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 3. Ciclo de vida -->
+  <section>
+    <h2>O que cada comando apaga</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Comando</th><th>Containers</th><th>Rede</th><th>Volumes (seus dados)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">docker compose up -d</td><td><span class="pill new">cria / inicia</span></td><td><span class="pill new">cria</span></td><td><span class="pill new">cria se não existir</span></td></tr>
+          <tr><td class="mono">docker compose stop</td><td><span class="pill keep">param, ficam</span></td><td><span class="pill keep">fica</span></td><td><span class="pill keep">ficam</span></td></tr>
+          <tr><td class="mono">docker compose restart</td><td><span class="pill keep">reiniciam</span></td><td><span class="pill keep">fica</span></td><td><span class="pill keep">ficam</span></td></tr>
+          <tr><td class="mono">docker compose down</td><td><span class="pill gone">removidos</span></td><td><span class="pill gone">removida</span></td><td><span class="pill keep">ficam</span></td></tr>
+          <tr class="danger"><td>docker compose down -v</td><td><span class="pill gone">removidos</span></td><td><span class="pill gone">removida</span></td><td><span class="pill lost">APAGADOS</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="callout prose"><strong>Regra prática:</strong> containers e rede são descartáveis e o Compose recria tudo a partir do YAML. Só os volumes guardam o que você não consegue recriar. Por isso o <code>-v</code> pede atenção dobrada.</p>
+  </section>
+
+  <!-- 4. Código comentado -->
+  <section>
+    <h2>O arquivo, linha por linha</h2>
+    <div class="code">
+      <div class="file"><span>flowmind-ai/docker-compose.yml</span><span>versão em uso no projeto</span></div>
+<pre><span class="k">name</span>: flowmind-ai                 <span class="c"># prefixo da rede e dos volumes (flowmind-ai_default...)</span>
+
+<span class="k">services</span>:
+  <span class="k">postgres</span>:                         <span class="c"># nome do serviço = hostname dentro da rede</span>
+    <span class="k">image</span>: <span class="s">postgres:16-alpine</span>       <span class="c"># major 16 travada; patches (16.x) entram com "pull"</span>
+    <span class="k">container_name</span>: flowmind-postgres <span class="c"># nome fixo, facilita "docker exec"</span>
+    <span class="k">restart</span>: unless-stopped         <span class="c"># volta sozinho, exceto se você parou</span>
+    <span class="k">environment</span>:
+      <span class="k">POSTGRES_USER</span>: <span class="v">${POSTGRES_USER}</span>         <span class="c"># o Compose lê do .env</span>
+      <span class="k">POSTGRES_PASSWORD</span>: <span class="v">${POSTGRES_PASSWORD}</span> <span class="c"># só vale na 1ª inicialização do volume!</span>
+      <span class="k">POSTGRES_DB</span>: <span class="v">${POSTGRES_DB}</span>
+    <span class="k">ports</span>:
+      - <span class="s">"<span class="v">${POSTGRES_PORT:-5432}</span>:5432"</span>     <span class="c"># host:container; 5432 é o padrão se faltar no .env</span>
+    <span class="k">volumes</span>:
+      - postgres_data:/var/lib/postgresql/data  <span class="c"># volume nomeado → dados persistem</span>
+    <span class="k">healthcheck</span>:
+      <span class="k">test</span>: [<span class="s">"CMD-SHELL"</span>, <span class="s">"pg_isready -U <span class="v">${POSTGRES_USER}</span> -d <span class="v">${POSTGRES_DB}</span>"</span>]
+      <span class="k">interval</span>: 10s                   <span class="c"># testa a cada 10s</span>
+      <span class="k">timeout</span>: 5s                     <span class="c"># mais que isso conta como falha</span>
+      <span class="k">retries</span>: 5                      <span class="c"># 5 falhas seguidas → unhealthy</span>
+
+  <span class="k">redis</span>:
+    <span class="k">image</span>: <span class="s">redis:7-alpine</span>
+    <span class="k">container_name</span>: flowmind-redis
+    <span class="k">restart</span>: unless-stopped
+    <span class="k">command</span>: [<span class="s">"redis-server"</span>,
+              <span class="s">"--appendonly"</span>, <span class="s">"yes"</span>,                 <span class="c"># AOF: cada escrita vai pro disco</span>
+              <span class="s">"--requirepass"</span>, <span class="s">"<span class="v">${REDIS_PASSWORD}</span>"</span>]   <span class="c"># sem senha = qualquer um na porta entra</span>
+    <span class="k">ports</span>:
+      - <span class="s">"<span class="v">${REDIS_PORT:-6379}</span>:6379"</span>
+    <span class="k">volumes</span>:
+      - redis_data:/data                 <span class="c"># onde fica o appendonly.aof</span>
+    <span class="k">healthcheck</span>:
+      <span class="c"># $$ = "não resolva agora": o shell DENTRO do container é quem lê $REDIS_PASSWORD</span>
+      <span class="k">test</span>: [<span class="s">"CMD-SHELL"</span>, <span class="s">"redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"</span>]
+      <span class="k">interval</span>: 10s
+      <span class="k">timeout</span>: 5s
+      <span class="k">retries</span>: 5
+    <span class="k">environment</span>:
+      <span class="k">REDIS_PASSWORD</span>: <span class="v">${REDIS_PASSWORD}</span>   <span class="c"># expõe a senha ao healthcheck acima</span>
+
+<span class="k">volumes</span>:                              <span class="c"># declara os volumes nomeados usados acima</span>
+  <span class="k">postgres_data</span>:
+  <span class="k">redis_data</span>:</pre>
+    </div>
+
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>.env.example → copie para .env</span><span>vai para o Git</span></div>
+<pre><span class="c"># PostgreSQL</span>
+<span class="k">POSTGRES_USER</span>=flowmind
+<span class="k">POSTGRES_PASSWORD</span>=troque_esta_senha
+<span class="k">POSTGRES_DB</span>=flowmind
+<span class="k">POSTGRES_PORT</span>=5432   <span class="c"># 5433 se já tiver Postgres no Windows</span>
+
+<span class="c"># Redis</span>
+<span class="k">REDIS_PASSWORD</span>=troque_esta_senha
+<span class="k">REDIS_PORT</span>=6379</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>como a variável viaja</span><span>interpolação</span></div>
+<pre><span class="c"># 1. .env (no host)</span>
+<span class="k">POSTGRES_USER</span>=flowmind
+
+<span class="c"># 2. docker-compose.yml, antes de subir</span>
+POSTGRES_USER: <span class="v">${POSTGRES_USER}</span>
+
+<span class="c"># 3. confira o resultado final:</span>
+$ docker compose config
+<span class="c">#   POSTGRES_USER: flowmind</span>
+
+<span class="c"># 4. dentro do container</span>
+$ docker exec flowmind-postgres env | grep POSTGRES_USER</pre>
+      </div>
+    </div>
+
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>terminal do VS Code</span><span>operação do dia a dia</span></div>
+<pre>docker compose up -d             <span class="c"># sobe em background</span>
+docker compose ps                <span class="c"># status + (healthy)</span>
+docker compose logs -f postgres  <span class="c"># Ctrl+C sai</span>
+
+<span class="c"># shell SQL dentro do container</span>
+docker exec -it flowmind-postgres \
+  psql -U flowmind -d flowmind
+<span class="c">#   \l bancos · \dt tabelas · \q sai</span>
+
+<span class="c"># shell do Redis (senha do .env)</span>
+docker exec -it flowmind-redis \
+  redis-cli -a &lt;REDIS_PASSWORD&gt;
+<span class="c">#   PING → PONG · KEYS * · INFO server</span></pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>strings de conexão</span><span>para a Fase 2</span></div>
+<pre><span class="c"># app rodando no Windows → localhost</span>
+<span class="k">DATABASE_URL</span>=<span class="s">postgresql://flowmind:SENHA@localhost:5432/flowmind</span>
+<span class="k">REDIS_URL</span>=<span class="s">redis://:SENHA@localhost:6379</span>
+
+<span class="c"># app rodando como serviço no MESMO compose</span>
+<span class="c"># → nome do serviço no lugar de localhost</span>
+<span class="k">DATABASE_URL</span>=<span class="s">postgresql://flowmind:SENHA@postgres:5432/flowmind</span>
+<span class="k">REDIS_URL</span>=<span class="s">redis://:SENHA@redis:6379</span>
+
+<span class="c"># localhost dentro de um container aponta</span>
+<span class="c"># para ele mesmo, não para o host</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Docker Compose</dt><dd>Ferramenta que liga vários containers a partir de um arquivo.</dd></div>
+      <div><dt>docker-compose.yml</dt><dd>O arquivo, em YAML, que descreve os containers do projeto.</dd></div>
+      <div><dt>Serviço</dt><dd>Cada item dentro de <code>services:</code>. Vira um container.</dd></div>
+      <div><dt>Variável de ambiente</dt><dd>Configuração <code>NOME=valor</code> que o programa lê ao iniciar.</dd></div>
+      <div><dt>.env</dt><dd>Arquivo com as variáveis do projeto, incluindo senhas. Fica fora do Git.</dd></div>
+      <div><dt>.env.example</dt><dd>Modelo do <code>.env</code> com valores falsos. Vai para o Git.</dd></div>
+      <div><dt>Interpolação</dt><dd>Trocar <code>${NOME}</code> no YAML pelo valor do <code>.env</code>.</dd></div>
+      <div><dt>Rede</dt><dd>Ligação interna onde os containers se acham pelo nome do serviço.</dd></div>
+      <div><dt>Volume nomeado</dt><dd>Volume com nome (<code>postgres_data</code>) onde os dados persistem.</dd></div>
+      <div><dt>Healthcheck</dt><dd>Teste periódico que diz se o serviço está pronto, e não só ligado.</dd></div>
+      <div><dt>Restart policy</dt><dd>Regra de quando religar um container que parou.</dd></div>
+      <div><dt>-d (detached)</dt><dd>Rodar em segundo plano e devolver o terminal.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Experimente: os dados sobrevivem?</h2>
+    <p class="prose">Troque <code>SENHA</code> pelo valor de <code>REDIS_PASSWORD</code> no <code>.env</code>. Rode tudo dentro da pasta <code>flowmind-ai/</code>.</p>
+    <ol class="steps">
+      <li>
+        <h3>Veja o estado atual</h3>
+        <div class="code"><pre>docker compose ps</pre></div>
+        <p class="expect">Esperado: os dois serviços <b>Up ... (healthy)</b>.</p>
+      </li>
+      <li>
+        <h3>Guarde um valor no Redis</h3>
+        <div class="code"><pre>docker exec flowmind-redis redis-cli -a SENHA --no-auth-warning SET prova:volume "sobrevivi"</pre></div>
+        <p class="expect">Esperado: <b>OK</b>.</p>
+      </li>
+      <li>
+        <h3>Apague containers e rede</h3>
+        <div class="code"><pre>docker compose down
+docker ps -a</pre></div>
+        <p class="expect">Esperado: nenhum container <code>flowmind-*</code> na lista.</p>
+      </li>
+      <li>
+        <h3>Ligue de novo e leia o valor</h3>
+        <div class="code"><pre>docker compose up -d
+docker exec flowmind-redis redis-cli -a SENHA --no-auth-warning GET prova:volume</pre></div>
+        <p class="expect">Esperado: <b>"sobrevivi"</b>. Containers novos, mesmo volume.</p>
+      </li>
+      <li>
+        <h3>Veja o YAML com as variáveis trocadas</h3>
+        <div class="code"><pre>docker compose config   <span class="c"># mostra as senhas: não compartilhe a saída</span></pre></div>
+        <p class="expect"><code>${POSTGRES_USER}</code> aparece como <b>flowmind</b>.</p>
+      </li>
+      <li>
+        <h3>Desfaça o teste</h3>
+        <div class="code"><pre>docker exec flowmind-redis redis-cli -a SENHA --no-auth-warning DEL prova:volume</pre></div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">no configuration file provided</td><td>Fora da pasta do projeto</td><td><code>cd</code> até <code>flowmind-ai/</code></td></tr>
+          <tr><td class="mono">found character that cannot start any token</td><td>TAB no YAML</td><td>Troque TABs por espaços</td></tr>
+          <tr><td class="mono">port is already allocated</td><td>Porta do Windows ocupada</td><td><code>POSTGRES_PORT=5433</code> no <code>.env</code></td></tr>
+          <tr><td>Senha nova do <code>.env</code> não funciona</td><td>Só vale na 1ª criação do volume</td><td><code>ALTER USER</code> no <code>psql</code></td></tr>
+          <tr><td>Banco apareceu vazio</td><td>Rodou <code>down -v</code></td><td>Leia duas vezes antes do <code>-v</code></td></tr>
+          <tr><td>API em container não acha o banco</td><td>Usou <code>localhost</code></td><td>Use o nome do serviço: <code>postgres</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. O que o Compose faz que o Docker sozinho não faz?</summary><p>Lê um arquivo com a descrição de vários containers e liga, desliga ou apaga todos juntos com um comando, sempre do mesmo jeito.</p></details>
+      <details><summary>2. Depois de docker compose down, o banco foi apagado?</summary><p>Não. <code>down</code> apaga containers e rede, mas mantém os volumes. Só <code>down -v</code> apaga os volumes.</p></details>
+      <details><summary>3. Por que o .env não vai para o Git e o .env.example vai?</summary><p>O <code>.env</code> tem as senhas reais. O <code>.env.example</code> mostra quais variáveis existem, com valores falsos.</p></details>
+      <details><summary>4. Uma API em outro container do mesmo Compose conecta em localhost:5432 ou postgres:5432?</summary><p>Em <code>postgres:5432</code>. Dentro de um container, <code>localhost</code> é ele mesmo.</p></details>
+      <details><summary>5. O container está "Up", mas não "healthy". A API já pode conectar?</summary><p>Não é garantido. "Up" só diz que o processo ligou; "healthy" diz que o teste de prontidão passou.</p></details>
+    </div>
+  </section>
+</main>

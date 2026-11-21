@@ -1,0 +1,741 @@
+<title>Aula NestJS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>backend</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>NestJS, do zero</h1>
+    <p class="lead">O framework que organiza a API do FlowMind em módulos, controllers e services, e monta as peças sozinho com injeção de dependências.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li>1 · Docker</li><li>2 · PostgreSQL</li><li>3 · Redis</li><li>4 · Docker Compose</li><li>5 · Node.js</li>
+      <li aria-current="step">6 · NestJS</li><li>7 · Prisma</li><li>8 · Validação (DTOs)</li><li>9 · JWT + bcrypt</li><li>10 · Vitest</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>Aula 5 (Node.js, npm e TypeScript):</strong> o Nest roda no Node e é escrito em TypeScript.</li>
+        <li><strong>API em poucas linhas:</strong> programa que espera <strong>pedidos</strong> pela rede e devolve <strong>respostas</strong>. Cada pedido tem um método (<code>GET</code> buscar, <code>POST</code> criar, <code>PATCH</code> alterar, <code>DELETE</code> apagar) e uma rota (<code>/tasks</code>). A resposta costuma ser <strong>JSON</strong>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>Uma API que cresce sem regras</h3>
+        <ul>
+          <li>Rotas de usuários, tarefas, documentos, login, IA... cada arquivo fazendo de tudo.</li>
+          <li>Um arquivo muda e outro quebra.</li>
+          <li>Cada peça monta sozinha a conexão com o banco e a configuração, repetindo código.</li>
+        </ul>
+        <p>O <strong>NestJS</strong> diz onde cada coisa fica (<strong>module</strong>, <strong>controller</strong>, <strong>service</strong>) e entrega as peças prontas a quem pede.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>O restaurante</h3>
+        <ul>
+          <li><strong>Controller</strong> = garçom: anota o pedido e leva o prato. Não cozinha.</li>
+          <li><strong>Service</strong> = cozinheiro: sabe a receita.</li>
+          <li><strong>Module</strong> = praça da cozinha (confeitaria, grelhados).</li>
+          <li><strong>Injeção de dependências</strong> = gerente: o cozinheiro pede uma panela e o gerente entrega a panela compartilhada.</li>
+        </ul>
+        <p class="limit">Onde a analogia falha: um garçom atende uma mesa por vez. O mesmo controller atende milhares de pedidos ao mesmo tempo, graças ao event loop.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>O caminho de um pedido</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 230" role="img" aria-label="O navegador envia GET /stats. O roteador do Nest entrega ao AppController, que chama o PrismaService, que consulta o PostgreSQL. A resposta volta como JSON.">
+          <defs>
+            <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="10" y="70" width="120" height="56" rx="8" class="box"/>
+          <text x="70" y="103" text-anchor="middle">Navegador</text>
+
+          <rect x="190" y="30" width="520" height="150" rx="10" class="boundary"/>
+          <text x="204" y="50" class="small">API NestJS · apps/api · porta 3000</text>
+
+          <rect x="210" y="70" width="140" height="56" rx="8" class="box"/>
+          <text x="280" y="95" text-anchor="middle">Roteador</text>
+          <text x="280" y="114" text-anchor="middle" class="small">@Get('stats')</text>
+          <rect x="380" y="70" width="140" height="56" rx="8" class="hl"/>
+          <text x="450" y="95" text-anchor="middle" class="accent-text">Controller</text>
+          <text x="450" y="114" text-anchor="middle" class="small">garçom</text>
+          <rect x="550" y="70" width="140" height="56" rx="8" class="hl"/>
+          <text x="620" y="95" text-anchor="middle" class="accent-text">PrismaService</text>
+          <text x="620" y="114" text-anchor="middle" class="small">injetado</text>
+
+          <rect x="760" y="70" width="130" height="56" rx="8" class="pg"/>
+          <text x="825" y="103" text-anchor="middle" class="pg-text">PostgreSQL</text>
+
+          <line x1="130" y1="90" x2="206" y2="90" class="edge" marker-end="url(#s1)"/>
+          <text x="168" y="82" text-anchor="middle" class="label">GET /stats</text>
+          <line x1="350" y1="98" x2="376" y2="98" class="edge" marker-end="url(#s1)"/>
+          <line x1="520" y1="98" x2="546" y2="98" class="edge" marker-end="url(#s1)"/>
+          <line x1="690" y1="98" x2="756" y2="98" class="edge" marker-end="url(#s1)"/>
+          <text x="723" y="90" text-anchor="middle" class="label">SQL</text>
+          <polyline points="825,126 825,206 70,206 70,130" class="edge dashed" marker-end="url(#s1)"/>
+          <text x="450" y="200" text-anchor="middle" class="label">{"users":0,"tasks":0} · JSON</text>
+        </svg>
+      </div>
+      <figcaption>O controller só recebe e repassa. Quem fala com o banco é o <code>PrismaService</code>, que o Nest injetou no controller. O objeto devolvido vira JSON sozinho.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Quem o Nest monta, e em que ordem</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 250" role="img" aria-label="O AppModule importa ConfigModule e PrismaModule, global. O ConfigService é entregue ao PrismaService, que é entregue aos controllers e services que o pedirem.">
+          <defs>
+            <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="330" y="16" width="240" height="50" rx="8" class="hl"/>
+          <text x="450" y="46" text-anchor="middle" class="title accent-text">AppModule</text>
+
+          <rect x="40" y="110" width="250" height="70" rx="8" class="box"/>
+          <text x="56" y="136" class="mono">ConfigModule</text>
+          <text x="56" y="158" class="small">isGlobal · lê apps/api/.env</text>
+          <rect x="325" y="110" width="250" height="70" rx="8" class="box"/>
+          <text x="341" y="136" class="mono">PrismaModule  @Global</text>
+          <text x="341" y="158" class="small">providers: [PrismaService]</text>
+          <rect x="610" y="110" width="250" height="70" rx="8" class="box"/>
+          <text x="626" y="136" class="mono">AppController + AppService</text>
+          <text x="626" y="158" class="small">rota GET /</text>
+
+          <line x1="400" y1="66" x2="180" y2="106" class="edge" marker-end="url(#s2)"/>
+          <line x1="450" y1="66" x2="450" y2="106" class="edge" marker-end="url(#s2)"/>
+          <line x1="500" y1="66" x2="720" y2="106" class="edge" marker-end="url(#s2)"/>
+          <text x="450" y="92" text-anchor="middle" class="label">imports</text>
+
+          <line x1="290" y1="210" x2="321" y2="210" class="edge dashed" marker-end="url(#s2)"/>
+          <line x1="575" y1="210" x2="606" y2="210" class="edge dashed" marker-end="url(#s2)"/>
+          <text x="165" y="214" text-anchor="middle" class="small">ConfigService</text>
+          <text x="450" y="214" text-anchor="middle" class="small">PrismaService</text>
+          <text x="735" y="214" text-anchor="middle" class="small">quem pedir no constructor</text>
+          <text x="450" y="240" text-anchor="middle" class="label">setas tracejadas: o Nest entrega a instância (injeção)</text>
+        </svg>
+      </div>
+      <figcaption>Ao iniciar, o Nest cria primeiro quem não depende de ninguém (<code>ConfigService</code>), depois quem depende dele (<code>PrismaService</code>), e guarda uma instância de cada. Se faltar uma peça, a API nem sobe.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>O código, comentado</h2>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>src/app.module.ts</span><span>TS</span></div>
+<pre><span class="k">@Module</span>({
+  imports: [
+    <span class="c">// lê o .env e libera o ConfigService</span>
+    ConfigModule.forRoot({ isGlobal: <span class="v">true</span> }),
+    <span class="c">// libera o PrismaService para todos</span>
+    PrismaModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+<span class="k">export class</span> AppModule {}</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>src/prisma/prisma.service.ts</span><span>TS</span></div>
+<pre><span class="k">@Injectable</span>()   <span class="c">// pode ser injetado</span>
+<span class="k">export class</span> PrismaService <span class="k">extends</span> PrismaClient
+  <span class="k">implements</span> OnModuleInit, OnModuleDestroy {
+  <span class="k">constructor</span>(config: ConfigService) { <span class="c">// DI</span>
+    <span class="k">const</span> adapter = <span class="k">new</span> PrismaPg({
+      connectionString:
+        config.getOrThrow(<span class="s">'DATABASE_URL'</span>),
+    });
+    <span class="k">super</span>({ adapter });
+  }
+  <span class="k">async</span> onModuleInit()    { <span class="k">await</span> <span class="k">this</span>.$connect(); }
+  <span class="k">async</span> onModuleDestroy() { <span class="k">await</span> <span class="k">this</span>.$disconnect(); }
+}</pre>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Decorator</th><th>Onde</th><th>Diz ao Nest</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">@Module()</td><td>classe</td><td>"este é um grupo: estes são os imports, controllers e providers"</td></tr>
+          <tr><td class="mono">@Global()</td><td>módulo</td><td>"meus exports valem em todos os módulos"</td></tr>
+          <tr><td class="mono">@Controller()</td><td>classe</td><td>"eu recebo pedidos HTTP"</td></tr>
+          <tr><td class="mono">@Get('stats')</td><td>método</td><td>"eu respondo GET /stats"</td></tr>
+          <tr><td class="mono">@Injectable()</td><td>classe</td><td>"pode me criar e me entregar a quem pedir"</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Framework</dt><dd>Estrutura pronta que define como organizar e montar o programa.</dd></div>
+      <div><dt>Rota</dt><dd>Método + endereço de um pedido, como <code>GET /tasks</code>.</dd></div>
+      <div><dt>JSON</dt><dd>Formato de texto para dados: <code>{ "chave": "valor" }</code>.</dd></div>
+      <div><dt>Controller</dt><dd>Recebe pedidos HTTP e devolve respostas.</dd></div>
+      <div><dt>Service / Provider</dt><dd>Classe com a lógica de negócio, injetável em outras.</dd></div>
+      <div><dt>Module</dt><dd>Agrupa controllers e providers de um assunto.</dd></div>
+      <div><dt>Decorator</dt><dd>Etiqueta com <code>@</code> que dá instruções ao Nest.</dd></div>
+      <div><dt>Injeção de dependências</dt><dd>O Nest cria as peças e entrega a quem pediu no <code>constructor</code>.</dd></div>
+      <div><dt>Singleton</dt><dd>Uma única instância compartilhada pela aplicação toda.</dd></div>
+      <div><dt>Lifecycle hook</dt><dd>Método chamado num momento certo, como <code>onModuleInit</code>.</dd></div>
+      <div><dt>ConfigModule</dt><dd>Lê o <code>.env</code> e entrega as variáveis via <code>ConfigService</code>.</dd></div>
+      <div><dt>Nest CLI</dt><dd>O comando <code>nest</code>, que cria projetos e arquivos.</dd></div>
+      <div><dt>Vitest / oxlint</dt><dd>Roda os testes / procura erros no código sem rodá-lo.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Experimente você mesmo</h2>
+    <p class="prose">Uma rota <code>GET /stats</code> que conta usuários e tarefas usando o <code>PrismaService</code> injetado.</p>
+    <ol class="steps">
+      <li>
+        <h3>Suba o banco e a API</h3>
+        <div class="code"><pre>docker compose up -d     # na raiz flowmind-ai/
+cd apps/api
+npm run start:dev</pre></div>
+        <p class="expect">Esperado: <b>Nest application successfully started</b>.</p>
+      </li>
+      <li>
+        <h3>Adicione a rota em src/app.controller.ts</h3>
+        <div class="code"><pre>import { PrismaService } from './prisma/prisma.service.js';
+
+constructor(
+  private readonly appService: AppService,
+  private readonly prisma: PrismaService, // injetado
+) {}
+
+@Get('stats')
+async stats() {
+  return {
+    users: await this.prisma.user.count(),
+    tasks: await this.prisma.task.count(),
+  };
+}</pre></div>
+      </li>
+      <li>
+        <h3>Abra http://localhost:3000/stats</h3>
+        <p class="expect">Esperado: <b>{"users":0,"tasks":0}</b></p>
+      </li>
+      <li>
+        <h3>Provoque o erro de DI</h3>
+        <p>Tire o <code>PrismaModule</code> dos <code>imports</code> do <code>app.module.ts</code> e salve.</p>
+        <p class="expect">Esperado: <b>Nest can't resolve dependencies of the AppController (AppService, ?)</b>. Coloque de volta.</p>
+      </li>
+      <li>
+        <h3>Desfaça</h3>
+        <p>Remova a rota e o <code>PrismaService</code> do constructor, ou mantenha se quiser usá-la.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>NestJS no mundo real</h2>
+    <div class="prose">
+      <p>Na maioria das empresas, "backend em NestJS" quer dizer uma <strong>API REST</strong>: HTTP, JSON e um banco como o PostgreSQL. Só que o Nest não é um framework "de REST". Ele organiza o backend por dentro, com modules, services e injeção de dependências. REST é só uma das <strong>portas de entrada</strong> possíveis.</p>
+      <p>A ideia que vale levar: <strong>a lógica de negócio fica nos services, e o mesmo service pode ser chamado por portas diferentes</strong>.</p>
+    </div>
+
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 300" role="img" aria-label="Cinco portas de entrada (REST, GraphQL, WebSocket, mensagens e filas ou cron) chamam os mesmos services, que usam PostgreSQL e Redis.">
+          <defs>
+            <marker id="s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="15" y="20" width="160" height="64" rx="8" class="hl"/>
+          <text x="95" y="46" text-anchor="middle" class="accent-text">REST</text>
+          <text x="95" y="68" text-anchor="middle" class="mono">@Controller</text>
+          <rect x="190" y="20" width="160" height="64" rx="8" class="box"/>
+          <text x="270" y="46" text-anchor="middle">GraphQL</text>
+          <text x="270" y="68" text-anchor="middle" class="mono">@Resolver</text>
+          <rect x="365" y="20" width="160" height="64" rx="8" class="box"/>
+          <text x="445" y="46" text-anchor="middle">WebSocket</text>
+          <text x="445" y="68" text-anchor="middle" class="mono">@WebSocketGateway</text>
+          <rect x="540" y="20" width="160" height="64" rx="8" class="box"/>
+          <text x="620" y="46" text-anchor="middle">Mensagens</text>
+          <text x="620" y="68" text-anchor="middle" class="mono">@MessagePattern</text>
+          <rect x="715" y="20" width="160" height="64" rx="8" class="box"/>
+          <text x="795" y="46" text-anchor="middle">Filas e cron</text>
+          <text x="795" y="68" text-anchor="middle" class="mono">@Processor · @Cron</text>
+
+          <line x1="95" y1="84" x2="190" y2="136" class="edge" marker-end="url(#s3)"/>
+          <line x1="270" y1="84" x2="300" y2="136" class="edge" marker-end="url(#s3)"/>
+          <line x1="445" y1="84" x2="445" y2="136" class="edge" marker-end="url(#s3)"/>
+          <line x1="620" y1="84" x2="590" y2="136" class="edge" marker-end="url(#s3)"/>
+          <line x1="795" y1="84" x2="710" y2="136" class="edge" marker-end="url(#s3)"/>
+
+          <rect x="150" y="140" width="600" height="60" rx="10" class="hl-fill"/>
+          <text x="450" y="166" text-anchor="middle" class="title accent-text">Services (TasksService, UsersService...)</text>
+          <text x="450" y="187" text-anchor="middle" class="small">a mesma lógica de negócio, não importa por qual porta o pedido chegou</text>
+
+          <line x1="340" y1="200" x2="340" y2="236" class="edge" marker-end="url(#s3)"/>
+          <line x1="560" y1="200" x2="560" y2="236" class="edge" marker-end="url(#s3)"/>
+          <rect x="250" y="240" width="180" height="48" rx="8" class="pg"/>
+          <text x="340" y="269" text-anchor="middle" class="pg-text">PostgreSQL</text>
+          <rect x="470" y="240" width="180" height="48" rx="8" class="redis"/>
+          <text x="560" y="269" text-anchor="middle" class="redis-text">Redis</text>
+        </svg>
+      </div>
+      <figcaption>Na analogia do restaurante: salão, delivery e drive-thru são portas diferentes, mas a cozinha é a mesma. REST está destacado porque é a porta mais comum.</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Porta</th><th>Pacote</th><th>Quando se usa</th><th>Exemplo no FlowMind</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">REST</td><td class="mono">@nestjs/common</td><td>O padrão. Front-end web, app mobile e integrações chamando rotas HTTP</td><td><code>POST /tasks</code> cria uma tarefa</td></tr>
+          <tr><td class="mono">GraphQL</td><td class="mono">@nestjs/graphql</td><td>Front-end com muitas telas que precisam de dados em formatos diferentes; o cliente escolhe os campos</td><td>Uma query traz tarefa + autor + documentos de uma vez</td></tr>
+          <tr><td class="mono">WebSocket</td><td class="mono">@nestjs/websockets</td><td>Tempo real: chat, notificações, edição colaborativa</td><td>Aviso na tela quando a IA termina de processar</td></tr>
+          <tr><td class="mono">Microsserviços</td><td class="mono">@nestjs/microservices</td><td>Sistemas grandes, divididos em serviços que conversam por Kafka, RabbitMQ, Redis ou gRPC</td><td>Um serviço de cobrança separado da API principal</td></tr>
+          <tr><td class="mono">Filas</td><td class="mono">@nestjs/bullmq</td><td>Trabalho demorado que não pode travar a resposta: e-mails, PDFs, chamadas de IA</td><td>Resumir um documento com IA em segundo plano</td></tr>
+          <tr><td class="mono">Cron</td><td class="mono">@nestjs/schedule</td><td>Tarefas agendadas: limpeza, relatórios, lembretes</td><td>Todo dia às 8h, lembrar de tarefas atrasadas</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>O mesmo service, três portas</h3>
+    <div class="code-grid">
+      <div class="code">
+        <div class="file"><span>src/tasks/ · controller, gateway e processor</span><span>TS</span></div>
+<pre><span class="c">// Porta REST: POST /tasks</span>
+<span class="k">@Controller</span>(<span class="s">'tasks'</span>)
+<span class="k">export class</span> TasksController {
+  <span class="k">constructor</span>(<span class="k">private readonly</span> tasks: TasksService) {}
+
+  <span class="k">@Post</span>()
+  create(<span class="k">@Body</span>() dto: CreateTaskDto) {
+    <span class="k">return this</span>.tasks.create(dto);
+  }
+}
+
+<span class="c">// Porta WebSocket: evento 'task:create'</span>
+<span class="k">@WebSocketGateway</span>()
+<span class="k">export class</span> TasksGateway {
+  <span class="k">constructor</span>(<span class="k">private readonly</span> tasks: TasksService) {}
+
+  <span class="k">@SubscribeMessage</span>(<span class="s">'task:create'</span>)
+  create(<span class="k">@MessageBody</span>() dto: CreateTaskDto) {
+    <span class="k">return this</span>.tasks.create(dto);
+  }
+}
+
+<span class="c">// Porta fila: um worker pega jobs da fila 'ai' no Redis</span>
+<span class="k">@Processor</span>(<span class="s">'ai'</span>)
+<span class="k">export class</span> AiProcessor <span class="k">extends</span> WorkerHost {
+  <span class="k">constructor</span>(<span class="k">private readonly</span> tasks: TasksService) { <span class="k">super</span>(); }
+
+  <span class="k">async</span> process(job: Job&lt;{ taskId: <span class="k">string</span> }&gt;) {
+    <span class="k">return this</span>.tasks.summarize(job.data.taskId);
+  }
+}</pre>
+      </div>
+    </div>
+    <div class="prose"><p>Os três recebem o mesmo <code>TasksService</code> por injeção. Por isso a regra "lógica no service, não no controller" importa tanto: se a lógica estivesse no controller, você teria que copiá-la para o gateway e para o worker.</p></div>
+
+    <h3>Como um projeto profissional se organiza</h3>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>apps/api/src/ · uma pasta por assunto</span></div>
+<pre>src/
+├─ main.ts            <span class="c">// sobe a API</span>
+├─ app.module.ts
+├─ prisma/            <span class="c">// acesso ao banco</span>
+├─ auth/              <span class="c">// login, JWT, guards</span>
+├─ users/
+├─ tasks/
+│  ├─ tasks.module.ts
+│  ├─ tasks.controller.ts
+│  ├─ tasks.service.ts
+│  ├─ tasks.service.spec.ts  <span class="c">// testes</span>
+│  └─ dto/
+│     ├─ create-task.dto.ts
+│     └─ update-task.dto.ts
+└─ common/            <span class="c">// filtros, interceptors</span></pre>
+      </div>
+      <div class="panel">
+        <p class="eyebrow">Por que assim</p>
+        <ul>
+          <li><strong>Pasta por assunto</strong> (feature), não por tipo. Tudo de tarefas mora em <code>tasks/</code>.</li>
+          <li>Um time pode mexer em <code>tasks/</code> sem quebrar <code>users/</code>.</li>
+          <li>O comando <code>nest g resource tasks</code> já gera essa estrutura.</li>
+          <li>Se um dia <code>tasks/</code> virar um microsserviço, ele já está isolado.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>O que toda API REST profissional tem</h3>
+    <p class="prose">Antes de chegar no controller, o pedido passa por camadas que o Nest já traz prontas. Elas ficam fora do controller para não repetir código em cada rota.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ordem</th><th>Peça</th><th>Faz o quê</th><th>Uso típico</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td class="mono">Middleware</td><td>Mexe no pedido cru, antes de tudo</td><td>Logs de acesso, CORS, <code>helmet</code></td></tr>
+          <tr><td class="mono">2</td><td class="mono">Guard</td><td>Decide se o pedido pode passar</td><td>"Tem token JWT válido?" "É admin?"</td></tr>
+          <tr><td class="mono">3</td><td class="mono">Interceptor</td><td>Envolve a chamada: roda antes e depois</td><td>Medir tempo, padronizar a resposta, cache</td></tr>
+          <tr><td class="mono">4</td><td class="mono">Pipe</td><td>Valida e converte os dados que chegaram</td><td><code>ValidationPipe</code> + DTO com <code>class-validator</code></td></tr>
+          <tr><td class="mono">5</td><td class="mono">Controller → Service</td><td>A rota e a regra de negócio</td><td>Criar a tarefa no banco</td></tr>
+          <tr><td class="mono">se der erro</td><td class="mono">Exception filter</td><td>Transforma o erro numa resposta HTTP padronizada</td><td><code>404</code>, <code>400</code> com mensagem clara, sem vazar detalhes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>Além disso, quase todo projeto sério inclui:</p>
+      <ul>
+        <li><strong>DTOs validados</strong>: classes que descrevem o formato do corpo do pedido. Dado fora do formato é recusado com <code>400</code> antes de chegar no service.</li>
+        <li><strong>Documentação Swagger</strong> (<code>@nestjs/swagger</code>): uma página em <code>/docs</code> que lista e testa todas as rotas, gerada a partir do código.</li>
+        <li><strong>Autenticação</strong>: login que devolve um JWT e um guard que confere o token em cada rota protegida.</li>
+        <li><strong>Configuração por ambiente</strong>: <code>.env</code> diferente em dev, staging e produção, lido pelo <code>ConfigService</code>.</li>
+        <li><strong>Health check</strong> (<code>@nestjs/terminus</code>): uma rota como <code>/health</code> que o servidor consulta para saber se a API e o banco estão de pé.</li>
+        <li><strong>Testes</strong>: unitários nos services (trocando o banco por um falso) e testes e2e que chamam as rotas de verdade.</li>
+      </ul>
+    </div>
+    <p class="callout"><strong>Arquitetura comum no mercado:</strong> uma API REST para o front-end e um ou mais workers lendo filas no Redis para o trabalho pesado. Tudo no mesmo repositório, compartilhando os mesmos services. É um caminho natural para o FlowMind: a API responde rápido e as chamadas de IA rodam em segundo plano.</p>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Nest can't resolve dependencies of the X (?)</td><td>A peça pedida não está em nenhum módulo acessível, ou falta <code>@Injectable()</code></td><td>Importe o módulo que a exporta ou use <code>@Global()</code></td></tr>
+          <tr><td>Banco recusando conexões</td><td><code>new PrismaClient()</code> espalhado pelo código</td><td>Use sempre o <code>PrismaService</code> injetado</td></tr>
+          <tr><td class="mono">EADDRINUSE :::3000</td><td>Outra API já está na porta</td><td>Feche a outra ou mude <code>PORT</code> no <code>.env</code></td></tr>
+          <tr><td><code>DATABASE_URL</code> undefined</td><td>API iniciada fora de <code>apps/api</code></td><td>Rode os comandos dentro de <code>apps/api</code></td></tr>
+          <tr><td>Controller enorme e difícil de testar</td><td>Regra de negócio no garçom</td><td>Mova a lógica para um service</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. Quem é o controller, o service e o module no restaurante?</summary><p>Garçom, cozinheiro e praça da cozinha.</p></details>
+      <details><summary>2. O que acontece com constructor(private prisma: PrismaService)?</summary><p>O Nest entrega a instância única do <code>PrismaService</code>, já conectada ao banco.</p></details>
+      <details><summary>3. Por que o PrismaModule tem @Global()?</summary><p>Quase todo módulo precisa do banco; assim basta importá-lo uma vez no <code>AppModule</code>.</p></details>
+      <details><summary>4. Para que servem onModuleInit e onModuleDestroy?</summary><p>Conectar ao banco quando a API sobe e fechar as conexões quando ela desliga.</p></details>
+      <details><summary>5. NestJS serve só para API REST?</summary><p>Não. REST é a porta mais comum, mas o mesmo service pode ser chamado por GraphQL, WebSocket, mensagens, filas ou cron. O Nest organiza o backend por dentro.</p></details>
+      <details><summary>6. Por que validar o corpo do pedido com DTO + ValidationPipe?</summary><p>Para recusar dados errados com 400 antes que cheguem no service ou no banco, sem escrever ifs de validação em cada rota.</p></details>
+    </div>
+  </section>
+  <section id="evolucao">
+    <p class="eyebrow"><b>evolução prática</b> · fase 3 do flowmind-ai</p>
+    <h2>CRUD REST protegido: o caminho completo de um pedido</h2>
+    <div class="prose">
+      <p>A API ganhou rotas para <strong>criar, listar, ler, alterar e apagar tarefas</strong> (CRUD). Antes de tocar no banco, cada pedido responde três perguntas: <strong>quem é você?</strong> (Guard), <strong>o que você mandou está certo?</strong> (Pipe) e <strong>essa tarefa é sua?</strong> (service). Aulas de apoio: 8 (Validação com DTOs) e 9 (JWT + bcrypt).</p>
+      <p class="limit">Analogia, continuando o restaurante: o <strong>segurança da porta</strong> (Guard) confere a reserva e a <strong>recepcionista</strong> (Pipe) confere se o pedido só tem pratos do cardápio, antes do garçom anotar. Onde falha: na API o segurança confere cada pedido de novo, porque HTTP não tem memória.</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Um PATCH /tasks/:id passa pelo roteador, pelo AuthGuard (que pode responder 401), pelos Pipes ParseUUIDPipe e ValidationPipe (que podem responder 400), pelo controller e pelo TasksService (que pode responder 404) até o PostgreSQL. A resposta volta como JSON com status 200.">
+          <defs>
+            <marker id="n3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <text x="10" y="24" class="mono">PATCH /tasks/2b1c…  ·  Authorization: Bearer eyJ…  ·  {"status":"DONE"}</text>
+          <rect x="10" y="50" width="110" height="60" rx="8" class="box"/>
+          <text x="65" y="76" text-anchor="middle">Roteador</text>
+          <text x="65" y="96" text-anchor="middle" class="small">@Patch(':id')</text>
+          <rect x="150" y="50" width="130" height="60" rx="8" class="hl"/>
+          <text x="215" y="76" text-anchor="middle" class="accent-text">Guard</text>
+          <text x="215" y="96" text-anchor="middle" class="small">AuthGuard</text>
+          <rect x="310" y="50" width="150" height="60" rx="8" class="hl"/>
+          <text x="385" y="76" text-anchor="middle" class="accent-text">Pipes</text>
+          <text x="385" y="96" text-anchor="middle" class="small">UUID + ValidationPipe</text>
+          <rect x="490" y="50" width="130" height="60" rx="8" class="box"/>
+          <text x="555" y="76" text-anchor="middle">Controller</text>
+          <text x="555" y="96" text-anchor="middle" class="small">@CurrentUser()</text>
+          <rect x="650" y="50" width="120" height="60" rx="8" class="box"/>
+          <text x="710" y="76" text-anchor="middle">TasksService</text>
+          <text x="710" y="96" text-anchor="middle" class="small">where {id, userId}</text>
+          <rect x="800" y="50" width="90" height="60" rx="8" class="pg"/>
+          <text x="845" y="85" text-anchor="middle" class="pg-text">Postgres</text>
+
+          <line x1="120" y1="80" x2="146" y2="80" class="edge" marker-end="url(#n3)"/>
+          <line x1="280" y1="80" x2="306" y2="80" class="edge" marker-end="url(#n3)"/>
+          <line x1="460" y1="80" x2="486" y2="80" class="edge" marker-end="url(#n3)"/>
+          <line x1="620" y1="80" x2="646" y2="80" class="edge" marker-end="url(#n3)"/>
+          <line x1="770" y1="80" x2="796" y2="80" class="edge" marker-end="url(#n3)"/>
+
+          <line x1="215" y1="110" x2="215" y2="146" class="edge" marker-end="url(#n3)"/>
+          <rect x="160" y="150" width="110" height="34" rx="6" class="state bad"/>
+          <text x="215" y="172" text-anchor="middle" class="bad-text">401</text>
+          <line x1="385" y1="110" x2="385" y2="146" class="edge" marker-end="url(#n3)"/>
+          <rect x="330" y="150" width="110" height="34" rx="6" class="state bad"/>
+          <text x="385" y="172" text-anchor="middle" class="bad-text">400</text>
+          <line x1="710" y1="110" x2="710" y2="146" class="edge" marker-end="url(#n3)"/>
+          <rect x="655" y="150" width="110" height="34" rx="6" class="state bad"/>
+          <text x="710" y="172" text-anchor="middle" class="bad-text">404</text>
+          <text x="215" y="202" text-anchor="middle" class="small">sem token / token falso</text>
+          <text x="385" y="202" text-anchor="middle" class="small">id não-UUID / body inválido</text>
+          <text x="710" y="202" text-anchor="middle" class="small">não existe ou não é sua</text>
+
+          <polyline points="845,110 845,236 555,236" class="edge dashed" marker-end="url(#n3)"/>
+          <rect x="420" y="222" width="130" height="28" rx="6" class="state ok"/>
+          <text x="485" y="241" text-anchor="middle" class="ok-text">200 · JSON</text>
+        </svg>
+      </div>
+      <figcaption>A ordem é fixa no Nest: Guards antes de Pipes. Não adianta validar o body de quem nem deveria entrar. Cada etapa pode encerrar o pedido com um erro HTTP.</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Método e rota</th><th>Faz</th><th>Sucesso</th><th>Erros</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">POST /tasks</td><td>cria tarefa do usuário logado</td><td><span class="pill keep">201</span></td><td>400, 401</td></tr>
+          <tr><td class="mono">GET /tasks</td><td>lista as tarefas do usuário</td><td><span class="pill keep">200</span></td><td>401</td></tr>
+          <tr><td class="mono">GET /tasks/:id</td><td>lê uma tarefa</td><td><span class="pill keep">200</span></td><td>400, 401, 404</td></tr>
+          <tr><td class="mono">PATCH /tasks/:id</td><td>altera só os campos enviados</td><td><span class="pill keep">200</span></td><td>400, 401, 404</td></tr>
+          <tr><td class="mono">DELETE /tasks/:id</td><td>apaga</td><td><span class="pill keep">204</span></td><td>400, 401, 404</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>src/tasks/tasks.controller.ts</span><span>TS</span></div>
+<pre><span class="k">@Controller</span>(<span class="s">'tasks'</span>)
+<span class="k">@UseGuards</span>(AuthGuard)       <span class="c">// toda a classe</span>
+<span class="k">export class</span> TasksController {
+  <span class="k">@Patch</span>(<span class="s">':id'</span>)
+  update(
+    <span class="k">@CurrentUser</span>() user: AuthUser,
+    <span class="k">@Param</span>(<span class="s">'id'</span>, ParseUUIDPipe) id: <span class="k">string</span>,
+    <span class="k">@Body</span>() dto: UpdateTaskDto,
+  ) {
+    <span class="k">return this</span>.tasksService.update(user.id, id, dto);
+  }
+
+  <span class="k">@Delete</span>(<span class="s">':id'</span>)
+  <span class="k">@HttpCode</span>(HttpStatus.NO_CONTENT) <span class="c">// 204</span>
+  remove(…) { … }
+}</pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>src/tasks/tasks.service.ts · módulos</span><span>TS</span></div>
+<pre><span class="c">// exceção vira resposta HTTP</span>
+<span class="k">const</span> task = <span class="k">await this</span>.prisma.task.findFirst({
+  where: { id, userId },   <span class="c">// id E dono</span>
+});
+<span class="k">if</span> (!task)
+  <span class="k">throw new</span> NotFoundException(<span class="s">'Tarefa não encontrada'</span>);
+
+<span class="c">// auth.module.ts: empresta o Guard</span>
+exports: [AuthGuard, JwtModule]
+<span class="c">// tasks.module.ts: pega emprestado</span>
+imports: [AuthModule]</pre>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Exceção</th><th>Status</th><th>Onde usamos</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">BadRequestException</td><td>400</td><td>ValidationPipe e ParseUUIDPipe</td></tr>
+          <tr><td class="mono">UnauthorizedException</td><td>401</td><td>AuthGuard e login</td></tr>
+          <tr><td class="mono">NotFoundException</td><td>404</td><td>tarefa inexistente ou de outro usuário</td></tr>
+          <tr><td class="mono">ConflictException</td><td>409</td><td>e-mail já cadastrado</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <dl class="glossary">
+      <div><dt>CRUD</dt><dd>Criar, ler, atualizar e apagar um recurso.</dd></div>
+      <div><dt>REST</dt><dd>Cada recurso tem um endereço; o verbo HTTP diz a ação.</dd></div>
+      <div><dt>Parâmetro de rota</dt><dd>Parte variável da URL, como <code>:id</code>.</dd></div>
+      <div><dt>Guard</dt><dd>Decide se o pedido entra, antes do controller.</dd></div>
+      <div><dt>Pipe</dt><dd>Valida ou converte uma entrada antes do controller.</dd></div>
+      <div><dt>@HttpCode()</dt><dd>Troca o status padrão da resposta.</dd></div>
+      <div><dt>exports</dt><dd>Peças que um módulo empresta a quem o importar.</dd></div>
+    </dl>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Armadilha nova</th><th>Consequência</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr class="danger"><td>Esquecer <code>@UseGuards(AuthGuard)</code></td><td>Rota pública: 200 sem token</td><td>Teste sempre com <code>curl</code> sem <code>Authorization</code></td></tr>
+          <tr class="danger"><td>Filtrar só por <code>id</code></td><td>Usuário lê tarefa de outro</td><td><code>where: { id, userId }</code></td></tr>
+          <tr><td>Responder 403 para tarefa alheia</td><td>Revela que o id existe</td><td>Responda 404</td></tr>
+          <tr><td><code>data: { ...dto }</code> no Prisma</td><td>Lint <code>no-misused-spread</code>; campos extras no banco</td><td>Montar campo a campo (<code>toData</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quiz">
+      <details><summary>7. Em que ordem rodam Guard, Pipe e Controller?</summary><p>Guard → Pipes → Controller: primeiro decide se entra, depois valida, por fim trabalha com dados confiáveis.</p></details>
+      <details><summary>8. Por que o DELETE responde 204?</summary><p>Deu certo e não há nada para devolver: o recurso não existe mais.</p></details>
+      <details><summary>9. E se o AuthModule não exportar o AuthGuard?</summary><p>O <code>TasksModule</code> não consegue usá-lo e a API não sobe: <code>Nest can't resolve dependencies of the AuthGuard (?)</code>.</p></details>
+    </div>
+  </section>
+</main>

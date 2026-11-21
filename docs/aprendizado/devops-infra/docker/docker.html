@@ -1,0 +1,446 @@
+<title>Aula Docker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>devops-infra</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>Docker, do zero</h1>
+    <p class="lead">Como rodar o PostgreSQL e o Redis no seu PC sem instalar nenhum dos dois, em caixas isoladas que você liga e apaga em segundos.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li aria-current="step">1 · Docker</li>
+      <li>2 · PostgreSQL</li>
+      <li>3 · Redis</li>
+      <li>4 · Docker Compose</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose">
+      <p>Nenhuma aula anterior. Só três ideias que vamos usar o tempo todo:</p>
+      <ul>
+        <li><strong>Programa vs. processo:</strong> o programa é o arquivo instalado (o <code>.exe</code>). O processo é ele <em>rodando</em>. Abrir o Chrome duas vezes = 1 programa, 2 processos.</li>
+        <li><strong>Terminal:</strong> janela onde você digita comandos em texto. No VS Code: <em>Terminal → New Terminal</em>.</li>
+        <li><strong>Porta:</strong> o computador é um prédio, <code>localhost</code> é o endereço do prédio e a porta é o número do apartamento. PostgreSQL mora no 5432, Redis no 6379.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>"Na minha máquina funciona"</h3>
+        <p>Instalar PostgreSQL e Redis direto no Windows funciona, mas cada pessoa precisa instalar as mesmas versões e configurar igual. Quem já tem a versão 14 de outro projeto entra em conflito com a 16. Desinstalar deixa sujeira.</p>
+        <p>O Docker roda cada programa numa <strong>caixa isolada</strong>, o <strong>container</strong>, que já vem com tudo que o programa precisa e não mexe no resto do PC.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>A receita e o bolo</h3>
+        <ul>
+          <li><strong>Imagem</strong> = a receita. Fica guardada, não "roda".</li>
+          <li><strong>Container</strong> = o bolo feito com a receita. É a coisa viva. Uma receita faz quantos bolos você quiser.</li>
+          <li><strong>Docker Hub</strong> = o livro de receitas público da internet.</li>
+          <li>Jogar o bolo fora não apaga a receita.</li>
+        </ul>
+        <p class="limit">Onde a analogia falha: bolo não "roda". O container é um programa em execução, que pode ser parado e ligado de novo sem ser destruído.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Da receita aos bolos</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 280" role="img" aria-label="O comando pull baixa uma imagem do Docker Hub. A imagem é uma pilha de camadas somente leitura. O comando run cria vários containers independentes a partir da mesma imagem.">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="20" y="90" width="170" height="110" rx="10" class="box"/>
+          <text x="36" y="118" class="title">Docker Hub</text>
+          <text x="36" y="138" class="small">livro de receitas online</text>
+          <text x="36" y="166" class="mono">postgres:16-alpine</text>
+          <text x="36" y="184" class="mono">redis:7-alpine</text>
+
+          <line x1="190" y1="145" x2="266" y2="145" class="edge" marker-end="url(#a1)"/>
+          <text x="228" y="137" text-anchor="middle" class="label">pull</text>
+
+          <text x="370" y="70" text-anchor="middle" class="title">imagem (receita)</text>
+          <rect x="270" y="84" width="200" height="34" rx="5" class="chip"/>
+          <text x="370" y="106" text-anchor="middle">configuração padrão</text>
+          <rect x="270" y="122" width="200" height="34" rx="5" class="chip"/>
+          <text x="370" y="144" text-anchor="middle">PostgreSQL 16</text>
+          <rect x="270" y="160" width="200" height="34" rx="5" class="chip"/>
+          <text x="370" y="182" text-anchor="middle">Alpine Linux (base)</text>
+          <text x="370" y="218" text-anchor="middle" class="small">camadas somente leitura</text>
+
+          <text x="750" y="26" text-anchor="middle" class="title">containers (bolos)</text>
+          <rect x="620" y="40" width="260" height="56" rx="8" class="hl"/>
+          <text x="636" y="64" class="mono">flowmind-postgres</text>
+          <text x="636" y="84" class="small">rodando · camada gravável própria</text>
+          <rect x="620" y="122" width="260" height="56" rx="8" class="hl"/>
+          <text x="636" y="146" class="mono">outro-projeto-db</text>
+          <text x="636" y="166" class="small">rodando · camada gravável própria</text>
+          <rect x="620" y="204" width="260" height="56" rx="8" class="hl"/>
+          <text x="636" y="228" class="mono">teste-rapido</text>
+          <text x="636" y="248" class="small">parado · não foi apagado</text>
+
+          <line x1="470" y1="139" x2="616" y2="68" class="edge" marker-end="url(#a1)"/>
+          <line x1="470" y1="139" x2="616" y2="150" class="edge" marker-end="url(#a1)"/>
+          <line x1="470" y1="139" x2="616" y2="232" class="edge" marker-end="url(#a1)"/>
+          <text x="545" y="148" text-anchor="middle" class="label">run</text>
+        </svg>
+      </div>
+      <figcaption>Uma imagem gera vários containers independentes. Cada container ganha uma camada gravável só dele, que é apagada junto com o container. Por isso bancos de dados guardam os dados num volume, fora do container.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Container não é máquina virtual</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 330" role="img" aria-label="Uma máquina virtual carrega um sistema operacional convidado inteiro para cada aplicação. Containers dispensam essa camada e compartilham o kernel Linux do host, por isso são menores e ligam mais rápido.">
+          <text x="20" y="30" class="title">Máquina virtual</text>
+          <text x="20" y="50" class="small">cada VM carrega um sistema inteiro</text>
+          <rect x="20" y="80" width="200" height="34" rx="5" class="box"/><text x="120" y="102" text-anchor="middle">App A</text>
+          <rect x="230" y="80" width="200" height="34" rx="5" class="box"/><text x="330" y="102" text-anchor="middle">App B</text>
+          <rect x="20" y="120" width="200" height="34" rx="5" class="chip"/><text x="120" y="142" text-anchor="middle">bibliotecas</text>
+          <rect x="230" y="120" width="200" height="34" rx="5" class="chip"/><text x="330" y="142" text-anchor="middle">bibliotecas</text>
+          <rect x="20" y="160" width="200" height="34" rx="5" class="hl-fill"/><text x="120" y="182" text-anchor="middle" class="accent-text">SO convidado (GBs)</text>
+          <rect x="230" y="160" width="200" height="34" rx="5" class="hl-fill"/><text x="330" y="182" text-anchor="middle" class="accent-text">SO convidado (GBs)</text>
+          <rect x="20" y="200" width="410" height="34" rx="5" class="chip"/><text x="225" y="222" text-anchor="middle">Hipervisor (simula hardware)</text>
+          <rect x="20" y="240" width="410" height="34" rx="5" class="chip"/><text x="225" y="262" text-anchor="middle">Sistema do host</text>
+          <rect x="20" y="280" width="410" height="34" rx="5" class="chip"/><text x="225" y="302" text-anchor="middle">Hardware</text>
+
+          <text x="470" y="30" class="title">Containers</text>
+          <text x="470" y="50" class="small">compartilham o kernel do host</text>
+          <rect x="466" y="114" width="138" height="84" rx="8" class="boundary"/>
+          <rect x="606" y="114" width="138" height="84" rx="8" class="boundary"/>
+          <rect x="746" y="114" width="138" height="84" rx="8" class="boundary"/>
+          <rect x="470" y="120" width="130" height="34" rx="5" class="box"/><text x="535" y="142" text-anchor="middle">PostgreSQL</text>
+          <rect x="610" y="120" width="130" height="34" rx="5" class="box"/><text x="675" y="142" text-anchor="middle">Redis</text>
+          <rect x="750" y="120" width="130" height="34" rx="5" class="box future"/><text x="815" y="142" text-anchor="middle">API (Fase 2)</text>
+          <rect x="470" y="160" width="130" height="34" rx="5" class="chip"/><text x="535" y="182" text-anchor="middle">bibliotecas</text>
+          <rect x="610" y="160" width="130" height="34" rx="5" class="chip"/><text x="675" y="182" text-anchor="middle">bibliotecas</text>
+          <rect x="750" y="160" width="130" height="34" rx="5" class="chip"/><text x="815" y="182" text-anchor="middle">bibliotecas</text>
+          <rect x="470" y="200" width="410" height="34" rx="5" class="chip"/><text x="675" y="222" text-anchor="middle">Docker Engine</text>
+          <rect x="470" y="240" width="410" height="34" rx="5" class="chip"/><text x="675" y="262" text-anchor="middle">Kernel Linux (no Windows: WSL2)</text>
+          <rect x="470" y="280" width="410" height="34" rx="5" class="chip"/><text x="675" y="302" text-anchor="middle">Hardware</text>
+        </svg>
+      </div>
+      <figcaption>A camada em destaque, um sistema operacional inteiro por aplicação, é o que o container elimina. Sem ela, um container ocupa megabytes em vez de gigabytes e liga em segundos. O isolamento vem de recursos do próprio kernel Linux: <em>namespaces</em> (cada container vê só o que é dele) e <em>cgroups</em> (limite de CPU e memória).</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>O caminho de um comando no Windows</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 200" role="img" aria-label="Você digita docker no terminal. O Docker CLI leva o pedido ao Docker Engine, que roda dentro de um Linux leve, o WSL2. O Engine cria, liga e lista os containers.">
+          <defs>
+            <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="20" y="70" width="170" height="60" rx="8" class="box"/>
+          <text x="36" y="96" class="title">Você</text>
+          <text x="36" y="116" class="small">terminal do VS Code</text>
+
+          <rect x="240" y="70" width="150" height="60" rx="8" class="box"/>
+          <text x="256" y="96" class="mono">docker ps</text>
+          <text x="256" y="116" class="small">Docker CLI</text>
+
+          <rect x="430" y="20" width="450" height="164" rx="12" class="boundary"/>
+          <text x="446" y="42" class="small">WSL2 · Linux leve dentro do Windows (o Docker Desktop liga)</text>
+          <rect x="450" y="70" width="170" height="60" rx="8" class="hl"/>
+          <text x="466" y="96" class="title accent-text">Docker Engine</text>
+          <text x="466" y="116" class="small">o motor</text>
+
+          <rect x="690" y="58" width="170" height="44" rx="8" class="pg"/>
+          <text x="775" y="85" text-anchor="middle" class="mono">flowmind-postgres</text>
+          <rect x="690" y="120" width="170" height="44" rx="8" class="redis"/>
+          <text x="775" y="147" text-anchor="middle" class="mono">flowmind-redis</text>
+
+          <line x1="190" y1="100" x2="236" y2="100" class="edge" marker-end="url(#a3)"/>
+          <text x="213" y="92" text-anchor="middle" class="label">digita</text>
+          <line x1="390" y1="100" x2="446" y2="100" class="edge" marker-end="url(#a3)"/>
+          <text x="418" y="92" text-anchor="middle" class="label">pede</text>
+          <line x1="620" y1="92" x2="686" y2="80" class="edge" marker-end="url(#a3)"/>
+          <line x1="620" y1="108" x2="686" y2="142" class="edge" marker-end="url(#a3)"/>
+          <text x="653" y="104" text-anchor="middle" class="label">controla</text>
+        </svg>
+      </div>
+      <figcaption>Com o Docker Desktop fechado, o Engine está desligado e o comando <code>docker</code> não tem com quem falar. Foi exatamente o erro <code>failed to connect to the docker API</code> que apareceu no começo da Fase 1.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Imagem</dt><dd>Pacote somente-leitura com um programa e tudo de que ele precisa. A receita.</dd></div>
+      <div><dt>Container</dt><dd>Uma imagem em execução: um processo isolado do resto do computador. O bolo.</dd></div>
+      <div><dt>Tag</dt><dd>A versão da imagem, depois dos dois-pontos. Em <code>postgres:16-alpine</code>, é <code>16-alpine</code>.</dd></div>
+      <div><dt>Alpine</dt><dd>Linux mínimo, usado como base para deixar imagens pequenas.</dd></div>
+      <div><dt>Docker Hub</dt><dd>Site público com imagens prontas (hub.docker.com).</dd></div>
+      <div><dt>Docker Engine</dt><dd>O motor que fica ligado em segundo plano e realmente cria e roda os containers.</dd></div>
+      <div><dt>Docker CLI</dt><dd>O comando <code>docker</code> que você digita. Só leva pedidos ao Engine.</dd></div>
+      <div><dt>Docker Desktop</dt><dd>Aplicativo para Windows/Mac que instala e liga o Engine.</dd></div>
+      <div><dt>WSL2</dt><dd>Um Linux leve rodando dentro do Windows.</dd></div>
+      <div><dt>Kernel</dt><dd>O núcleo do sistema operacional, que controla memória, processos e hardware.</dd></div>
+      <div><dt>Volume</dt><dd>Pasta guardada pelo Docker fora do container, para os dados não sumirem.</dd></div>
+      <div><dt>Mapeamento de porta</dt><dd><code>-p 6380:6379</code>: porta do Windows (esquerda) ligada à porta do container (direita).</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Os comandos, um por um</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Comando</th><th>O que faz</th><th>Na analogia</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">docker pull redis:7-alpine</td><td>Baixa a imagem do Docker Hub</td><td>Copiar a receita do livro</td></tr>
+          <tr><td class="mono">docker images</td><td>Lista as imagens no seu PC</td><td>Ver as receitas guardadas</td></tr>
+          <tr><td class="mono">docker run ...</td><td>Cria um container e liga</td><td>Fazer um bolo</td></tr>
+          <tr><td class="mono">docker ps</td><td>Lista os containers rodando</td><td>Ver os bolos na mesa</td></tr>
+          <tr><td class="mono">docker ps -a</td><td>Lista todos, inclusive parados</td><td>Incluir os da geladeira</td></tr>
+          <tr><td class="mono">docker stop nome</td><td>Desliga, sem apagar</td><td>Guardar o bolo na geladeira</td></tr>
+          <tr><td class="mono">docker start nome</td><td>Liga de novo</td><td>Tirar da geladeira</td></tr>
+          <tr><td class="mono">docker rm nome</td><td>Apaga o container</td><td>Jogar o bolo fora</td></tr>
+          <tr><td class="mono">docker rmi imagem</td><td>Apaga a imagem</td><td>Rasgar a receita</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code">
+      <div class="file"><span>terminal do VS Code</span><span>cada flag explicada</span></div>
+<pre><span class="k">docker</span> info                     <span class="c"># o Engine está ligado? (erro = abra o Docker Desktop)</span>
+
+<span class="k">docker</span> run -d --name meu-redis -p 6380:6379 redis:7-alpine
+<span class="c">#  run            cria um container a partir da imagem e liga</span>
+<span class="c">#  -d             "detached": roda em segundo plano e devolve o terminal</span>
+<span class="c">#  --name         dá um nome ao container (senão o Docker inventa um)</span>
+<span class="c">#  -p 6380:6379   porta 6380 do Windows → porta 6379 de dentro do container</span>
+
+<span class="k">docker</span> logs meu-redis            <span class="c"># o que o programa escreveu na tela</span>
+<span class="k">docker</span> exec -it meu-redis sh     <span class="c"># abre um terminal DENTRO do container (exit para sair)</span></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experimente você mesmo</h2>
+    <ol class="steps">
+      <li>
+        <h3>Rode seu primeiro container</h3>
+        <div class="code"><pre>docker run hello-world</pre></div>
+        <p class="expect">Esperado: <b>Hello from Docker!</b> O Docker baixou a imagem, criou o container, o programa imprimiu a mensagem e terminou.</p>
+      </li>
+      <li>
+        <h3>Veja que ele ainda existe, parado</h3>
+        <div class="code"><pre>docker ps -a</pre></div>
+        <p class="expect">Procure a imagem <code>hello-world</code> com status <b>Exited (0)</b>: terminou, sem erro.</p>
+      </li>
+      <li>
+        <h3>Veja os containers do FlowMind</h3>
+        <div class="code"><pre>docker ps</pre></div>
+        <p class="expect">Esperado: <code>flowmind-postgres</code> e <code>flowmind-redis</code> com <b>Up ... (healthy)</b>.</p>
+      </li>
+      <li>
+        <h3>Entre num container e olhe em volta</h3>
+        <div class="code"><pre>docker exec -it flowmind-redis sh
+cat /etc/os-release   <span class="c"># "Alpine Linux": ele acha que é um Linux sozinho</span>
+ps                    <span class="c"># só os processos do próprio container</span>
+exit</pre></div>
+      </li>
+      <li>
+        <h3>Desfaça o teste</h3>
+        <div class="code"><pre>docker rm $(docker ps -aq --filter ancestor=hello-world)
+docker rmi hello-world</pre></div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">failed to connect to the docker API</td><td>Docker Desktop fechado</td><td>Abra o Docker Desktop e espere "Engine running"</td></tr>
+          <tr><td class="mono">port is already allocated</td><td>Outro programa usa a porta do Windows</td><td>Mude o número da esquerda: <code>-p 5433:5432</code></td></tr>
+          <tr><td>Dados sumiram</td><td>Container apagado sem volume</td><td>Sempre use volume para banco de dados</td></tr>
+          <tr><td>"Dei stop e o container ainda aparece"</td><td><code>stop</code> só desliga</td><td>Para apagar: <code>docker rm</code></td></tr>
+          <tr><td>Versão mudou sozinha</td><td>Tag <code>latest</code> ou sem tag</td><td>Fixe a versão: <code>postgres:16-alpine</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. Qual a diferença entre imagem e container?</summary><p>A imagem é o pacote parado e somente-leitura (a receita). O container é a imagem em execução (o bolo). De uma imagem saem quantos containers você quiser.</p></details>
+      <details><summary>2. Você rodou docker rm flowmind-postgres. A imagem sumiu?</summary><p>Não. Só o container foi apagado. A imagem continua em <code>docker images</code>.</p></details>
+      <details><summary>3. Por que o Docker no Windows precisa do WSL2?</summary><p>Containers usam recursos do kernel Linux (namespaces e cgroups). O WSL2 fornece esse Linux dentro do Windows.</p></details>
+      <details><summary>4. Em -p 5433:5432, em qual porta você conecta a partir do Windows?</summary><p>Na 5433. A da esquerda é a do seu computador; a 5432 é a de dentro do container.</p></details>
+    </div>
+  </section>
+</main>

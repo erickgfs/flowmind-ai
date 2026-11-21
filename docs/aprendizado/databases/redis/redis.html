@@ -1,0 +1,404 @@
+<title>Aula Redis</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com figuras até 960px; problema → analogia → glossário → mecanismo → prática → revisão */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #172130;
+  --muted: #5b6779;
+  --line: #c8d1dd;
+  --accent: #1d5fe0;
+  --pg: #2f6395;
+  --redis: #c0322c;
+  --ok: #1d8049;
+  --warn: #a8700f;
+  --danger: #b42318;
+  --code-bg: #eceff5;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+    --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+    --code-bg: #121923; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d27; --fg: #e3e8ef; --muted: #95a1b3; --line: #2e3947;
+  --accent: #6f9cff; --pg: #84abd3; --redis: #f07a73; --ok: #52c483; --warn: #e2ad52; --danger: #f2837a;
+  --code-bg: #121923; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+strong { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+header { display: grid; gap: 14px; }
+header .lead { color: var(--muted); font-size: 1.08rem; max-width: 70ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* Trilha */
+.trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trail li { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); }
+.trail li[aria-current] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Problema / Analogia */
+.duo { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { display: flex; gap: 8px; align-items: baseline; }
+.panel .eyebrow { margin-bottom: -4px; }
+.panel.analogy { border-style: dashed; }
+.limit { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Glossário */
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+dl.glossary div { display: grid; gap: 2px 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+dl.glossary div:last-child { border-bottom: 0; }
+dl.glossary dt { font-family: var(--font-mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; }
+dl.glossary dd { margin: 0; font-size: 0.95rem; }
+@media (min-width: 700px) { dl.glossary div { grid-template-columns: 210px minmax(0, 1fr); } }
+
+/* Figuras */
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: 640px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+svg text { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+svg .label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+svg .boundary { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 6 5; }
+svg .net { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; }
+svg .box.future { stroke-dasharray: 4 4; }
+svg .chip { fill: var(--code-bg); stroke: var(--line); }
+svg .hl { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .hl-fill { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-width: 1.6; }
+svg .accent-text { fill: var(--accent); }
+svg .pg { fill: var(--surface); stroke: var(--pg); stroke-width: 2; }
+svg .redis { fill: var(--surface); stroke: var(--redis); stroke-width: 2; }
+svg .pg-text { fill: var(--pg); }
+svg .redis-text { fill: var(--redis); }
+svg .vol { fill: var(--code-bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .edge { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .lifeline { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 4 4; }
+svg .arrowhead { fill: var(--fg); }
+svg .state { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .state.ok { stroke: var(--ok); stroke-width: 2; }
+svg .state.bad { stroke: var(--danger); stroke-width: 2; }
+svg .ok-text { fill: var(--ok); }
+svg .bad-text { fill: var(--danger); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mono, td:first-child.mono { font-family: var(--font-mono); font-size: 0.86rem; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.keep { color: var(--ok); }
+.pill.gone { color: var(--muted); }
+.pill.lost { color: var(--danger); font-weight: 600; }
+.pill.new { color: var(--accent); }
+tr.danger td:first-child { color: var(--danger); }
+
+/* Código */
+.code-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .code-grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { min-width: 0; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--code-bg); align-content: start; }
+.code .file { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; }
+.c { color: var(--muted); font-style: italic; }
+.k { color: var(--accent); }
+.s { color: var(--ok); }
+.v { color: var(--warn); }
+.e { color: var(--danger); }
+
+/* Exercício */
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 20px; }
+ol.steps > li { counter-increment: step; display: grid; gap: 8px; padding-left: 42px; position: relative; min-width: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; display: grid; place-items: center; }
+ol.steps .expect { font-size: 0.92rem; color: var(--muted); }
+ol.steps .expect b { color: var(--ok); font-weight: 600; }
+
+/* Revisão */
+.quiz { display: grid; gap: 10px; }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+details p { color: var(--fg); }
+
+.callout { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; max-width: 70ch; }
+.callout strong { color: var(--warn); }
+.scale { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .scale { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scale .panel .big { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <header>
+    <p class="eyebrow"><b>databases</b> · projeto flowmind-ai · nível iniciante</p>
+    <h1>Redis, do zero</h1>
+    <p class="lead">Uma memória super-rápida ao lado do PostgreSQL, para guardar respostas prontas por alguns segundos, contar acessos e enfileirar trabalhos de IA.</p>
+    <ol class="trail" aria-label="Trilha de aulas">
+      <li>1 · Docker</li>
+      <li>2 · PostgreSQL</li>
+      <li aria-current="step">3 · Redis</li>
+      <li>4 · Docker Compose</li>
+    </ol>
+  </header>
+
+  <section>
+    <h2>Antes de começar</h2>
+    <div class="prose">
+      <p>Leia antes as aulas 1 (Docker) e 2 (PostgreSQL). E uma ideia nova: o computador guarda coisas em dois lugares.</p>
+    </div>
+    <div class="scale">
+      <div class="panel">
+        <p class="eyebrow">Memória RAM</p>
+        <p class="big">1 segundo</p>
+        <p>Extremamente rápida, mas pequena. <strong>Esquece tudo quando desliga.</strong></p>
+      </div>
+      <div class="panel">
+        <p class="eyebrow">Disco (SSD)</p>
+        <p class="big">vários minutos</p>
+        <p>Grande e permanente, mas bem mais lento. É onde o PostgreSQL guarda as tabelas.</p>
+      </div>
+    </div>
+    <p class="prose" style="color: var(--muted); font-size: 0.92rem">Escala imaginária: se ler um dado da RAM levasse 1 segundo, ler do SSD levaria vários minutos. A diferença real é de centenas a milhares de vezes.</p>
+  </section>
+
+  <section>
+    <h2>O problema e a ideia</h2>
+    <div class="duo">
+      <div class="panel">
+        <p class="eyebrow">O problema</p>
+        <h3>O mesmo trabalho, 500 vezes</h3>
+        <p>Se 500 pessoas abrem o mesmo quadro de tarefas no mesmo minuto, o PostgreSQL calcula a mesma resposta 500 vezes. O mesmo vale para a sessão de login (checada a cada clique), para contar chamadas à IA e para trabalhos demorados que deveriam esperar numa fila.</p>
+        <p>O <strong>Redis</strong> guarda dados <strong>na RAM</strong>, no formato <strong>chave → valor</strong>, e responde em microssegundos. Usamos ele como <strong>cache</strong>: um lugar para respostas prontas por um tempo.</p>
+      </div>
+      <div class="panel analogy">
+        <p class="eyebrow">Analogia</p>
+        <h3>A bancada e a despensa</h3>
+        <ul>
+          <li>A <strong>despensa</strong> é o PostgreSQL: cabe tudo, é permanente, mas buscar demora.</li>
+          <li>A <strong>bancada</strong> é o Redis: pequena, mas tudo está à mão.</li>
+          <li>Você olha primeiro na bancada. Se não tem, busca na despensa e deixa uma porção na bancada.</li>
+          <li>Na bancada tudo tem <strong>prazo de validade</strong>: o <strong>TTL</strong>.</li>
+        </ul>
+        <p class="limit">Onde a analogia falha: nossa bancada tem um diário (AOF) e não perde tudo ao reiniciar. Mesmo assim, a fonte oficial dos dados continua sendo o PostgreSQL.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cache-aside: olhar na bancada primeiro</h2>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 900 350" role="img" aria-label="Na primeira vez, a API não encontra a chave no Redis, busca no PostgreSQL e guarda a resposta no Redis por 60 segundos. Nas vezes seguintes, dentro desse prazo, a resposta vem direto do Redis e o PostgreSQL não é consultado.">
+          <defs>
+            <marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          </defs>
+          <rect x="60" y="16" width="180" height="40" rx="8" class="box future"/>
+          <text x="150" y="41" text-anchor="middle" class="title">API FlowMind</text>
+          <rect x="360" y="16" width="180" height="40" rx="8" class="redis"/>
+          <text x="450" y="41" text-anchor="middle" class="title redis-text">Redis (RAM)</text>
+          <rect x="660" y="16" width="180" height="40" rx="8" class="pg"/>
+          <text x="750" y="41" text-anchor="middle" class="title pg-text">PostgreSQL (disco)</text>
+
+          <line x1="150" y1="56" x2="150" y2="340" class="lifeline"/>
+          <line x1="450" y1="56" x2="450" y2="340" class="lifeline"/>
+          <line x1="750" y1="56" x2="750" y2="340" class="lifeline"/>
+
+          <text x="880" y="86" text-anchor="end" class="small">1ª vez: miss</text>
+          <line x1="150" y1="96" x2="446" y2="96" class="edge" marker-end="url(#r1)"/>
+          <text x="300" y="88" text-anchor="middle" class="label">GET cache:projeto:1</text>
+          <line x1="450" y1="124" x2="154" y2="124" class="edge dashed" marker-end="url(#r1)"/>
+          <text x="300" y="116" text-anchor="middle" class="label">(nil) · não tenho</text>
+          <line x1="150" y1="160" x2="746" y2="160" class="edge" marker-end="url(#r1)"/>
+          <text x="450" y="152" text-anchor="middle" class="label">SELECT ... WHERE projeto_id = 1</text>
+          <line x1="750" y1="188" x2="154" y2="188" class="edge dashed" marker-end="url(#r1)"/>
+          <text x="450" y="180" text-anchor="middle" class="label">linhas das tarefas</text>
+          <line x1="150" y1="224" x2="446" y2="224" class="edge" marker-end="url(#r1)"/>
+          <text x="300" y="216" text-anchor="middle" class="label">SET cache:projeto:1 ... EX 60</text>
+
+          <line x1="20" y1="250" x2="880" y2="250" class="lifeline"/>
+          <text x="880" y="272" text-anchor="end" class="small">próximos 60s: hit</text>
+          <line x1="150" y1="292" x2="446" y2="292" class="edge" marker-end="url(#r1)"/>
+          <text x="300" y="284" text-anchor="middle" class="label">GET cache:projeto:1</text>
+          <line x1="450" y1="320" x2="154" y2="320" class="edge dashed" marker-end="url(#r1)"/>
+          <text x="300" y="312" text-anchor="middle" class="label">dados prontos</text>
+          <text x="760" y="310" class="small">não é consultado</text>
+        </svg>
+      </div>
+      <figcaption>Setas cheias são pedidos; tracejadas são respostas. Na parte de baixo, o PostgreSQL nem fica sabendo dos pedidos. Quando alguém edita uma tarefa, a API apaga a chave (<code>DEL cache:projeto:1</code>) para ninguém ver dado velho. Isso se chama <strong>invalidar o cache</strong>.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>O valor pode ter formato</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tipo</th><th>Parece com</th><th>Exemplo no FlowMind</th><th>Comandos</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">String</td><td>uma variável</td><td><code>cache:tarefa:42</code> → JSON da tarefa</td><td class="mono">SET · GET · INCR</td></tr>
+          <tr><td class="mono">Hash</td><td>um objeto com campos</td><td><code>sessao:abc</code> → usuário e validade</td><td class="mono">HSET · HGETALL</td></tr>
+          <tr><td class="mono">List</td><td>uma fila</td><td>documentos esperando resumo da IA</td><td class="mono">LPUSH · RPOP</td></tr>
+          <tr><td class="mono">Set</td><td>conjunto sem repetição</td><td>ids de usuários online agora</td><td class="mono">SADD · SMEMBERS</td></tr>
+          <tr><td class="mono">Sorted Set</td><td>um ranking</td><td>tarefas por prioridade</td><td class="mono">ZADD · ZRANGE</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p><strong>Um comando por vez.</strong> O Redis executa os comandos numa fila única. Como tudo está na RAM, cada um leva microssegundos. A vantagem: <code>INCR</code> (somar 1) é <strong>atômico</strong>. Mil pessoas somando ao mesmo tempo nunca perdem uma contagem. É assim que se faz um limite de "20 chamadas à IA por minuto".</p>
+      <p><strong>Persistência.</strong> O <strong>AOF</strong> grava cada escrita num diário em disco; ao reiniciar, o Redis relê o diário. O <strong>RDB</strong> tira uma "foto" de tempos em tempos e perde o que mudou depois dela. No FlowMind usamos AOF, guardado no volume <code>redis_data</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário</h2>
+    <dl class="glossary">
+      <div><dt>Chave → valor</dt><dd>O dado é guardado sob um nome (a chave) e achado por ele.</dd></div>
+      <div><dt>Cache</dt><dd>Cópia temporária de uma resposta, num lugar rápido, para reuso.</dd></div>
+      <div><dt>Hit / miss</dt><dd>Hit: a resposta estava no cache. Miss: não estava, busca na fonte.</dd></div>
+      <div><dt>TTL</dt><dd>"Time To Live": segundos até a chave expirar e sumir sozinha.</dd></div>
+      <div><dt>Invalidar</dt><dd>Apagar uma chave do cache porque o dado original mudou.</dd></div>
+      <div><dt>Sessão</dt><dd>Registro de que um usuário está logado.</dd></div>
+      <div><dt>Fila</dt><dd>Lista de trabalhos esperando, processados em ordem de chegada.</dd></div>
+      <div><dt>Atômico</dt><dd>Acontece inteiro, sem ninguém interromper no meio.</dd></div>
+      <div><dt>AOF / RDB</dt><dd>Diário de comandos / foto periódica: as duas formas de salvar em disco.</dd></div>
+      <div><dt>redis-cli</dt><dd>O cliente de terminal do Redis.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Comandos comentados</h2>
+    <div class="code-grid two">
+      <div class="code">
+        <div class="file"><span>entrar no Redis</span><span>terminal</span></div>
+<pre><span class="c"># troque SENHA pelo REDIS_PASSWORD do .env</span>
+<span class="k">docker</span> exec -it flowmind-redis \
+  redis-cli -a SENHA --no-auth-warning
+<span class="c">#  redis-cli           cliente do Redis</span>
+<span class="c">#  -a SENHA            autentica</span>
+<span class="c">#  --no-auth-warning   esconde o aviso de</span>
+<span class="c">#                      senha na linha de comando</span>
+
+<span class="k">PING</span>                    <span class="c"># → PONG</span>
+<span class="k">INFO</span> server             <span class="c"># versão e detalhes</span>
+<span class="k">SCAN</span> 0 MATCH cache:*    <span class="c"># procura chaves sem travar</span></pre>
+      </div>
+      <div class="code">
+        <div class="file"><span>dentro do redis-cli</span><span>o essencial</span></div>
+<pre><span class="k">SET</span> nome <span class="s">"FlowMind"</span>          <span class="c"># guarda</span>
+<span class="k">GET</span> nome                     <span class="c"># → "FlowMind"</span>
+<span class="k">SET</span> cache:x <span class="s">"abc"</span> EX 60      <span class="c"># guarda por 60s</span>
+<span class="k">TTL</span> cache:x                  <span class="c"># segundos restantes</span>
+                             <span class="c"># -1 sem prazo · -2 não existe</span>
+<span class="k">EXPIRE</span> nome 30               <span class="c"># dá prazo a quem já existe</span>
+<span class="k">DEL</span> nome                     <span class="c"># apaga</span>
+<span class="k">INCR</span> visitas                 <span class="c"># +1, atômico</span>
+<span class="k">HSET</span> tarefa:1 titulo <span class="s">"API"</span>  <span class="c"># hash com campos</span>
+<span class="k">HGETALL</span> tarefa:1
+<span class="k">LPUSH</span> fila:ia <span class="s">"doc-7"</span>        <span class="c"># entra na fila</span>
+<span class="k">RPOP</span> fila:ia                 <span class="c"># sai o mais antigo</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experimente você mesmo</h2>
+    <ol class="steps">
+      <li>
+        <h3>Entre no Redis</h3>
+        <div class="code"><pre>docker exec -it flowmind-redis redis-cli -a SENHA --no-auth-warning
+PING</pre></div>
+        <p class="expect">Esperado: <b>PONG</b>.</p>
+      </li>
+      <li>
+        <h3>Guarde e leia</h3>
+        <div class="code"><pre>SET aula:saudacao "ola, redis"
+GET aula:saudacao</pre></div>
+        <p class="expect">Esperado: <b>OK</b> e depois <b>"ola, redis"</b>.</p>
+      </li>
+      <li>
+        <h3>Veja uma chave expirar</h3>
+        <div class="code"><pre>SET aula:temporaria "some em 15s" EX 15
+TTL aula:temporaria</pre></div>
+        <p class="expect">Rode <code>TTL</code> algumas vezes: o número cai. Depois de 15s, <code>GET aula:temporaria</code> responde <b>(nil)</b>.</p>
+      </li>
+      <li>
+        <h3>Conte de forma atômica</h3>
+        <div class="code"><pre>INCR aula:contador
+INCR aula:contador
+INCR aula:contador</pre></div>
+        <p class="expect">Esperado: <b>1</b>, <b>2</b>, <b>3</b>.</p>
+      </li>
+      <li>
+        <h3>Simule uma fila</h3>
+        <div class="code"><pre>LPUSH aula:fila "resumir doc 1" "resumir doc 2"
+RPOP aula:fila</pre></div>
+        <p class="expect">Esperado: <b>"resumir doc 1"</b>. O primeiro a entrar é o primeiro a sair.</p>
+      </li>
+      <li>
+        <h3>Desfaça e saia</h3>
+        <div class="code"><pre>DEL aula:saudacao aula:contador aula:fila
+exit</pre></div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Armadilhas comuns</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">NOAUTH Authentication required</td><td>Entrou sem a senha</td><td><code>-a SENHA</code> ou <code>AUTH SENHA</code></td></tr>
+          <tr><td>Memória enchendo aos poucos</td><td>Cache sem TTL</td><td>Todo cache leva <code>EX</code></td></tr>
+          <tr><td>Usuário vê tarefa antiga</td><td>Esqueceu de invalidar</td><td><code>DEL</code> na chave ao editar no PostgreSQL</td></tr>
+          <tr><td>Servidor trava por segundos</td><td><code>KEYS *</code> com muitas chaves</td><td>Use <code>SCAN</code></td></tr>
+          <tr><td>Dados importantes sumiram</td><td>Redis usado como banco principal</td><td>Fonte da verdade é o PostgreSQL</td></tr>
+          <tr><td>Difícil achar chaves</td><td>Nomes sem padrão</td><td>Use <code>objeto:id:detalhe</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teste seu entendimento</h2>
+    <div class="quiz">
+      <details><summary>1. Por que o Redis é tão mais rápido para ler uma chave?</summary><p>Porque os dados estão na RAM e a busca é direta pela chave. O PostgreSQL trabalha com disco e consultas mais complexas.</p></details>
+      <details><summary>2. O que a API faz num cache miss?</summary><p>Busca no PostgreSQL, guarda uma cópia no Redis com TTL e responde.</p></details>
+      <details><summary>3. Para que serve o TTL?</summary><p>Para a chave sumir sozinha. Evita encher a memória e limita por quanto tempo um dado velho pode aparecer.</p></details>
+      <details><summary>4. Se o container do Redis reiniciar, as chaves somem?</summary><p>No FlowMind, não: o AOF está ligado e fica no volume <code>redis_data</code>. Ao reiniciar, o Redis relê o diário.</p></details>
+    </div>
+  </section>
+</main>
